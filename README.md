@@ -10,7 +10,7 @@
 [![Contributors](https://img.shields.io/github/contributors/samber/slog-formatter)](https://github.com/samber/slog-formatter/graphs/contributors)
 [![License](https://img.shields.io/github/license/samber/slog-formatter)](./LICENSE)
 
-Commong formatters for [slog](https://pkg.go.dev/golang.org/x/exp/slog) library + helpers for building your own.
+Common formatters for [slog](https://pkg.go.dev/golang.org/x/exp/slog) library + helpers for building your own.
 
 **See also:**
 
