@@ -66,9 +66,9 @@ logger := slog.New(
 
 err := fmt.Errorf("an error")
 logger.Error("a message",
-    slog.With("very_private_data", "abcd"),
-    slog.With("user", user),
-    slog.With("err", err))
+    slog.Any("very_private_data", "abcd"),
+    slog.Any("user", user),
+    slog.Any("err", err))
 
 // outputs:
 // time=2023-04-10T14:00:0.000000+00:00 level=ERROR msg="a message" error.message="an error" error.type="*errors.errorString" user="John doe" very_private_data="********"
@@ -102,9 +102,9 @@ logger := slog.New(
 
 err := fmt.Errorf("an error")
 logger.Error("a message",
-    slog.With("very_private_data", "abcd"),
-    slog.With("user", user),
-    slog.With("err", err))
+    slog.Any("very_private_data", "abcd"),
+    slog.Any("user", user),
+    slog.Any("err", err))
 
 // outputs:
 // time=2023-04-10T14:00:0.000000+00:00 level=ERROR msg="a message" error.message="an error" error.type="*errors.errorString" user="John doe" very_private_data="********"
@@ -119,9 +119,11 @@ Handlers:
 - [NewFormatterMiddleware](#NewFormatterMiddleware): compatible with `slog-multi` middlewares
 
 Common formattes:
+- [ErrorFormatter](#ErrorFormatter): transforms a go error into a readable error
+- [HTTPRequestFormatter](#HTTPRequestFormatter-and-HTTPResponseFormatter): transforms a *http.Request into a readable object
+- [HTTPResponseFormatter](#HTTPRequestFormatter-and-HTTPResponseFormatter): transforms a *http.Response into a readable object
 - [PIIFormatter](#PIIFormatter): hide private Personal Identifiable Information (PII)
 - [IPAddressFormatter](#IPAddressFormatter): hide ip address from logs
-- [ErrorFormatter](#ErrorFormatter): transforms a go error into a readable error
 
 Custom formatter:
 - [Format](#Format): pass any attribute into a formatter
@@ -164,9 +166,9 @@ logger := slog.New(
 
 err := fmt.Errorf("an error")
 logger.Error("a message",
-    slog.With("very_private_data", "abcd"),
-    slog.With("user", user),
-    slog.With("err", err))
+    slog.Any("very_private_data", "abcd"),
+    slog.Any("user", user),
+    slog.Any("err", err))
 
 // outputs:
 // time=2023-04-10T14:00:0.000000+00:00 level=ERROR msg="a message" error.message="an error" error.type="*errors.errorString" user="John doe" very_private_data="********"
@@ -202,12 +204,75 @@ logger := slog.New(
 
 err := fmt.Errorf("an error")
 logger.Error("a message",
-    slog.With("very_private_data", "abcd"),
-    slog.With("user", user),
-    slog.With("err", err))
+    slog.Any("very_private_data", "abcd"),
+    slog.Any("user", user),
+    slog.Any("err", err))
 
 // outputs:
 // time=2023-04-10T14:00:0.000000+00:00 level=ERROR msg="a message" error.message="an error" error.type="*errors.errorString" user="John doe" very_private_data="********"
+```
+
+### ErrorFormatter
+
+Transforms a Go error into a readable error.
+
+```go
+import (
+	slogformatter "github.com/samber/slog-formatter"
+	"golang.org/x/exp/slog"
+)
+
+logger := slog.New(
+    slogformatter.NewFormatterHandler(
+        slogformatter.ErrorFormatter("error"),
+    )(
+        slog.NewTextHandler(os.Stdout),
+    ),
+)
+
+err := fmt.Errorf("an error")
+logger.Error("a message", With("error", err))
+
+// outputs:
+// {
+//   "time":"2023-04-10T14:00:0.000000+00:00",
+//   "level": "ERROR",
+//   "msg": "a message",
+//   "error": {
+//     "message": "an error",
+//     "type": "*errors.errorString"
+//   }
+// }
+```
+
+### HTTPRequestFormatter and HTTPResponseFormatter
+
+Transforms *http.Request and *http.Response into readable objects.
+
+```go
+import (
+	slogformatter "github.com/samber/slog-formatter"
+	"golang.org/x/exp/slog"
+)
+
+logger := slog.New(
+    slogformatter.NewFormatterHandler(
+        slogformatter.HTTPRequestFormatter(false),
+        slogformatter.HTTPResponseFormatter(false),
+    )(
+        slog.NewJSONHandler(os.Stdout),
+    ),
+)
+
+req, _ := http.NewRequest(http.MethodGet, "https://api.screeb.app", nil)
+req.Header.Set("Content-Type", "application/json")
+req.Header.Set("X-TOKEN", "1234567890")
+
+res, _ := http.DefaultClient.Do(req)
+
+logger.Error("a message",
+    slog.Any("request", req),
+    slog.Any("response", res))
 ```
 
 ### PIIFormatter
@@ -293,39 +358,6 @@ logger.
 //   "level": "ERROR",
 //   "msg": "an error",
 //   "ip_address": "*******",
-// }
-```
-
-### ErrorFormatter
-
-Transforms a Go error into a readable error.
-
-```go
-import (
-	slogformatter "github.com/samber/slog-formatter"
-	"golang.org/x/exp/slog"
-)
-
-logger := slog.New(
-    slogformatter.NewFormatterHandler(
-        slogformatter.ErrorFormatter("error"),
-    )(
-        slog.NewTextHandler(os.Stdout),
-    ),
-)
-
-err := fmt.Errorf("an error")
-logger.Error("a message", With("error", err))
-
-// outputs:
-// {
-//   "time":"2023-04-10T14:00:0.000000+00:00",
-//   "level": "ERROR",
-//   "msg": "a message",
-//   "error": {
-//     "message": "an error",
-//     "type": "*errors.errorString"
-//   }
 // }
 ```
 
