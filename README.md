@@ -265,7 +265,7 @@ logger := slog.New(
 )
 
 err := fmt.Errorf("an error")
-logger.Error("a message", With("error", err))
+logger.Error("a message", slog.Any("error", err))
 
 // outputs:
 // {

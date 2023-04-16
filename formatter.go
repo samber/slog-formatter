@@ -38,7 +38,7 @@ func FormatByKind(kind slog.Kind, formatter func(slog.Value) slog.Value) Formatt
 		value := attr.Value
 
 		if value.Kind() == kind {
-			return value, false
+			return formatter(value), true
 		}
 
 		return value, false
