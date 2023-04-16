@@ -1,5 +1,5 @@
 
-# slog formatters
+# slog: Attribute formatting
 
 [![tag](https://img.shields.io/github/tag/samber/slog-formatter.svg)](https://github.com/samber/slog-formatter/releases)
 ![Go Version](https://img.shields.io/badge/Go-%3E%3D%201.20.1-%23007d9c)
