@@ -119,6 +119,9 @@ Handlers:
 - [NewFormatterMiddleware](#NewFormatterMiddleware): compatible with `slog-multi` middlewares
 
 Common formattes:
+- [TimeFormatter](#TimeFormatter): transforms a `time.Time` into a readable string
+- [UnixTimestampFormatter](#UnixTimestampFormatter): transforms a `time.Time` into a unix timestamp.
+- [TimezoneConverter](#TimezoneConverter): set a `time.Time` to a different timezone
 - [ErrorFormatter](#ErrorFormatter): transforms a go error into a readable error
 - [HTTPRequestFormatter](#HTTPRequestFormatter-and-HTTPResponseFormatter): transforms a *http.Request into a readable object
 - [HTTPResponseFormatter](#HTTPRequestFormatter-and-HTTPResponseFormatter): transforms a *http.Response into a readable object
@@ -211,6 +214,36 @@ logger.Error("a message",
 
 // outputs:
 // time=2023-04-10T14:00:0.000000+00:00 level=ERROR msg="a message" error.message="an error" error.type="*errors.errorString" user="John doe" very_private_data="********"
+```
+
+### TimeFormatter
+
+Transforms a `time.Time` into a readable string.
+
+```go
+slogformatter.NewFormatterHandler(
+    slogformatter.TimeFormatter(time.DateTime, time.UTC),
+)
+```
+
+### UnixTimestampFormatter
+
+Transforms a `time.Time` into a unix timestamp.
+
+```go
+slogformatter.NewFormatterHandler(
+    slogformatter.UnixTimestampFormatter(time.Millisecond),
+)
+```
+
+### TimezoneConverter
+
+Set a `time.Time` to a different timezone.
+
+```go
+slogformatter.NewFormatterHandler(
+    slogformatter.TimezoneConverter(time.UTC),
+)
 ```
 
 ### ErrorFormatter

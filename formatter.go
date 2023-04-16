@@ -33,7 +33,7 @@ func FormatByType[T any](formatter func(T) slog.Value) Formatter {
 }
 
 // FormatByKind pass attributes matching `slog.Kind` into a formatter.
-func FormatByKind[T any](kind slog.Kind, formatter func(slog.Value) slog.Value) Formatter {
+func FormatByKind(kind slog.Kind, formatter func(slog.Value) slog.Value) Formatter {
 	return func(_ []string, attr slog.Attr) (slog.Value, bool) {
 		value := attr.Value
 
