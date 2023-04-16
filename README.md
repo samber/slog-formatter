@@ -15,6 +15,7 @@ A toolset for pipelining formatters to [slog](https://pkg.go.dev/golang.org/x/ex
 **See also:**
 
 - [slog-multi](https://github.com/samber/slog-multi): workflows of `slog` handlers (pipeline, fanout, ...)
+- [slog-gin](https://github.com/samber/slog-gin): Gin middleware for `slog` logger
 - [slog-datadog](https://github.com/samber/slog-datadog): A `slog` handler for `Datadog`
 - [slog-logstash](https://github.com/samber/slog-logstash): A `slog` handler for `Logstash`
 - [slog-slack](https://github.com/samber/slog-slack): A `slog` handler for `Slack`
