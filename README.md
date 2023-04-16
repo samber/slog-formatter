@@ -119,7 +119,7 @@ Handlers:
 - [NewFormatterHandler](#NewFormatterHandler): main handler
 - [NewFormatterMiddleware](#NewFormatterMiddleware): compatible with `slog-multi` middlewares
 
-Common formattes:
+Common formatters:
 - [TimeFormatter](#TimeFormatter): transforms a `time.Time` into a readable string
 - [UnixTimestampFormatter](#UnixTimestampFormatter): transforms a `time.Time` into a unix timestamp.
 - [TimezoneConverter](#TimezoneConverter): set a `time.Time` to a different timezone
