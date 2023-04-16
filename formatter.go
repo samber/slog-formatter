@@ -28,7 +28,20 @@ func FormatByType[T any](formatter func(T) slog.Value) Formatter {
 			return formatter(v), true
 		}
 
-		return slog.AnyValue(value), false
+		return value, false
+	}
+}
+
+// FormatByKind pass attributes matching `slog.Kind` into a formatter.
+func FormatByKind[T any](kind slog.Kind, formatter func(slog.Value) slog.Value) Formatter {
+	return func(_ []string, attr slog.Attr) (slog.Value, bool) {
+		value := attr.Value
+
+		if value.Kind() == kind {
+			return value, false
+		}
+
+		return value, false
 	}
 }
 
@@ -59,7 +72,7 @@ func FormatByFieldType[T any](key string, formatter func(T) slog.Value) Formatte
 			return formatter(v), true
 		}
 
-		return slog.AnyValue(value), false
+		return value, false
 	}
 }
 
@@ -102,6 +115,6 @@ func FormatByGroupKeyType[T any](groups []string, key string, formatter func(T) 
 			return formatter(v), true
 		}
 
-		return slog.AnyValue(value), false
+		return value, false
 	}
 }

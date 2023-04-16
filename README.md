@@ -127,6 +127,7 @@ Common formattes:
 
 Custom formatter:
 - [Format](#Format): pass any attribute into a formatter
+- [FormatByKind](#FormatByKind): pass attributes matching `slog.Kind` into a formatter
 - [FormatByType](#FormatByType): pass attributes matching generic type into a formatter
 - [FormatByKey](#FormatByKey): pass attributes matching key into a formatter
 - [FormatByFieldType](#FormatByFieldType): pass attributes matching both key and generic type into a formatter
@@ -374,6 +375,18 @@ slogformatter.NewFormatterHandler(
         }
 
         return value
+    }),
+)
+```
+
+### FormatByKind
+
+Pass attributes matching `slog.Kind` into a formatter.
+
+```go
+slogformatter.NewFormatterHandler(
+    slogformatter.FormatByKind(slog.KindDuration, func(value slog.Value) slog.Value {
+        return ...
     }),
 )
 ```
