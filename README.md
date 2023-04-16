@@ -10,7 +10,7 @@
 [![Contributors](https://img.shields.io/github/contributors/samber/slog-formatter)](https://github.com/samber/slog-formatter/graphs/contributors)
 [![License](https://img.shields.io/github/license/samber/slog-formatter)](./LICENSE)
 
-A toolset for pipelining formatters to [slog](https://pkg.go.dev/golang.org/x/exp/slog) loggers.
+Commong formatters for [slog](https://pkg.go.dev/golang.org/x/exp/slog) records and helpers for building your own.
 
 **See also:**
 
