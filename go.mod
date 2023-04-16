@@ -7,4 +7,4 @@ require (
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
 )
 
-require github.com/samber/lo v1.38.1 // indirect
+require github.com/samber/lo v1.38.1

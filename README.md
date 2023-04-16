@@ -1,5 +1,5 @@
 
-# slog formatters
+# slog: Attribute formatting
 
 [![tag](https://img.shields.io/github/tag/samber/slog-formatter.svg)](https://github.com/samber/slog-formatter/releases)
 ![Go Version](https://img.shields.io/badge/Go-%3E%3D%201.20.1-%23007d9c)
@@ -11,8 +11,6 @@
 [![License](https://img.shields.io/github/license/samber/slog-formatter)](./LICENSE)
 
 A toolset for pipelining formatters to [slog](https://pkg.go.dev/golang.org/x/exp/slog) loggers.
-
-⚠️ In some case, you should consider implementing `slog.LogValuer` instead of using this library.
 
 **See also:**
 
@@ -38,9 +36,13 @@ This library is v0 and follows SemVer strictly. On `slog` final release (go 1.21
 
 No breaking changes will be made to exported APIs before v1.0.0.
 
+⚠️ Warnings:
+- in some case, you should consider implementing `slog.LogValuer` instead of using this library.
+- use this library carefully, log processing can be very costly (!)
+
 ## 🚀 Getting started
 
-Here is a simple formatter that hides user email. 👇
+The following example has 3 formatters that anonymize data, format errors and format user. 👇
 
 ```go
 import (
@@ -371,10 +373,6 @@ slogformatter.NewFormatterHandler(
 
 ```go
 type customError struct {
-    ...
-}
-
-func (customError) Error() string {
     ...
 }
 
