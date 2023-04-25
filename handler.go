@@ -31,8 +31,9 @@ func (h *FormatterHandler) Enabled(ctx context.Context, l slog.Level) bool {
 // Handle implements slog.Handler.
 func (h *FormatterHandler) Handle(ctx context.Context, r slog.Record) error {
 	r2 := slog.NewRecord(r.Time, r.Level, r.Message, r.PC)
-	r.Attrs(func(attr slog.Attr) {
+	r.Attrs(func(attr slog.Attr) bool {
 		r2.AddAttrs(h.transformAttr(h.groups, attr))
+		return true
 	})
 
 	return h.handler.Handle(ctx, r2)
