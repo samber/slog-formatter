@@ -10,11 +10,12 @@
 [![Contributors](https://img.shields.io/github/contributors/samber/slog-formatter)](https://github.com/samber/slog-formatter/graphs/contributors)
 [![License](https://img.shields.io/github/license/samber/slog-formatter)](./LICENSE)
 
-A toolset for pipelining formatters to [slog](https://pkg.go.dev/golang.org/x/exp/slog) loggers.
+Common formatters for [slog](https://pkg.go.dev/golang.org/x/exp/slog) library + helpers for building your own.
 
 **See also:**
 
 - [slog-multi](https://github.com/samber/slog-multi): workflows of `slog` handlers (pipeline, fanout, ...)
+- [slog-gin](https://github.com/samber/slog-gin): Gin middleware for `slog` logger
 - [slog-datadog](https://github.com/samber/slog-datadog): A `slog` handler for `Datadog`
 - [slog-logstash](https://github.com/samber/slog-logstash): A `slog` handler for `Logstash`
 - [slog-slack](https://github.com/samber/slog-slack): A `slog` handler for `Slack`
@@ -74,51 +75,15 @@ logger.Error("a message",
 // time=2023-04-10T14:00:0.000000+00:00 level=ERROR msg="a message" error.message="an error" error.type="*errors.errorString" user="John doe" very_private_data="********"
 ```
 
-Using `slog-multi` pipelines:
-
-```go
-import (
-	slogformatter "github.com/samber/slog-formatter"
-	slogmulti "github.com/samber/slog-multi"
-	"golang.org/x/exp/slog"
-)
-
-formatter1 := slogformatter.FormatByKey("very_private_data", func(v slog.Value) slog.Value {
-    return slog.StringValue("***********")
-})
-formatter2 := slogformatter.ErrorFormatter("an error")
-formatter3 := slogformatter.FormatByType(func(u User) slog.Value {
-	return slog.StringValue(fmt.Sprintf("%s %s", u.firstname, u.lastname))
-})
-
-formattingMiddleware := slogformatter.NewFormatterHandler(formatter1, formatter2, formatter3)
-sink := slog.HandlerOptions{}.NewJSONHandler(os.Stderr)
-
-logger := slog.New(
-    slogmulti.
-        Pipe(formattingMiddleware).
-        Handler(sink),
-)
-
-err := fmt.Errorf("an error")
-logger.Error("a message",
-    slog.Any("very_private_data", "abcd"),
-    slog.Any("user", user),
-    slog.Any("err", err))
-
-// outputs:
-// time=2023-04-10T14:00:0.000000+00:00 level=ERROR msg="a message" error.message="an error" error.type="*errors.errorString" user="John doe" very_private_data="********"
-```
-
 ## 💡 Spec
 
 GoDoc: [https://pkg.go.dev/github.com/samber/slog-formatter](https://pkg.go.dev/github.com/samber/slog-formatter)
 
-Handlers:
+**Handlers:**
 - [NewFormatterHandler](#NewFormatterHandler): main handler
 - [NewFormatterMiddleware](#NewFormatterMiddleware): compatible with `slog-multi` middlewares
 
-Common formattes:
+**Common formatters:**
 - [TimeFormatter](#TimeFormatter): transforms a `time.Time` into a readable string
 - [UnixTimestampFormatter](#UnixTimestampFormatter): transforms a `time.Time` into a unix timestamp.
 - [TimezoneConverter](#TimezoneConverter): set a `time.Time` to a different timezone
@@ -128,7 +93,7 @@ Common formattes:
 - [PIIFormatter](#PIIFormatter): hide private Personal Identifiable Information (PII)
 - [IPAddressFormatter](#IPAddressFormatter): hide ip address from logs
 
-Custom formatter:
+**Custom formatter:**
 - [Format](#Format): pass any attribute into a formatter
 - [FormatByKind](#FormatByKind): pass attributes matching `slog.Kind` into a formatter
 - [FormatByType](#FormatByType): pass attributes matching generic type into a formatter
