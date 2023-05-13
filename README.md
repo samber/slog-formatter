@@ -12,6 +12,30 @@
 
 Common formatters for [slog](https://pkg.go.dev/golang.org/x/exp/slog) library + helpers for building your own.
 
+**Handlers:**
+- [NewFormatterHandler](#NewFormatterHandler): main handler
+- [NewFormatterMiddleware](#NewFormatterMiddleware): compatible with `slog-multi` middlewares
+
+**Common formatters:**
+- [TimeFormatter](#TimeFormatter): transforms a `time.Time` into a readable string
+- [UnixTimestampFormatter](#UnixTimestampFormatter): transforms a `time.Time` into a unix timestamp.
+- [TimezoneConverter](#TimezoneConverter): set a `time.Time` to a different timezone
+- [ErrorFormatter](#ErrorFormatter): transforms a go error into a readable error
+- [HTTPRequestFormatter](#HTTPRequestFormatter-and-HTTPResponseFormatter): transforms a *http.Request into a readable object
+- [HTTPResponseFormatter](#HTTPRequestFormatter-and-HTTPResponseFormatter): transforms a *http.Response into a readable object
+- [PIIFormatter](#PIIFormatter): hide private Personal Identifiable Information (PII)
+- [IPAddressFormatter](#IPAddressFormatter): hide ip address from logs
+
+**Custom formatter:**
+- [Format](#Format): pass any attribute into a formatter
+- [FormatByKind](#FormatByKind): pass attributes matching `slog.Kind` into a formatter
+- [FormatByType](#FormatByType): pass attributes matching generic type into a formatter
+- [FormatByKey](#FormatByKey): pass attributes matching key into a formatter
+- [FormatByFieldType](#FormatByFieldType): pass attributes matching both key and generic type into a formatter
+- [FormatByGroup](#FormatByGroup): pass attributes under a group into a formatter
+- [FormatByGroupKey](#FormatByGroupKey): pass attributes under a group and matching key, into a formatter
+- [FormatByGroupKeyType](#FormatByGroupKeyType): pass attributes under a group, matching key and matching a generic type, into a formatter
+
 **See also:**
 
 - [slog-multi](https://github.com/samber/slog-multi): `slog.Handler` chaining, fanout, routing, failover, load balancing...
@@ -87,30 +111,6 @@ logger.Error("a message",
 ## 💡 Spec
 
 GoDoc: [https://pkg.go.dev/github.com/samber/slog-formatter](https://pkg.go.dev/github.com/samber/slog-formatter)
-
-**Handlers:**
-- [NewFormatterHandler](#NewFormatterHandler): main handler
-- [NewFormatterMiddleware](#NewFormatterMiddleware): compatible with `slog-multi` middlewares
-
-**Common formatters:**
-- [TimeFormatter](#TimeFormatter): transforms a `time.Time` into a readable string
-- [UnixTimestampFormatter](#UnixTimestampFormatter): transforms a `time.Time` into a unix timestamp.
-- [TimezoneConverter](#TimezoneConverter): set a `time.Time` to a different timezone
-- [ErrorFormatter](#ErrorFormatter): transforms a go error into a readable error
-- [HTTPRequestFormatter](#HTTPRequestFormatter-and-HTTPResponseFormatter): transforms a *http.Request into a readable object
-- [HTTPResponseFormatter](#HTTPRequestFormatter-and-HTTPResponseFormatter): transforms a *http.Response into a readable object
-- [PIIFormatter](#PIIFormatter): hide private Personal Identifiable Information (PII)
-- [IPAddressFormatter](#IPAddressFormatter): hide ip address from logs
-
-**Custom formatter:**
-- [Format](#Format): pass any attribute into a formatter
-- [FormatByKind](#FormatByKind): pass attributes matching `slog.Kind` into a formatter
-- [FormatByType](#FormatByType): pass attributes matching generic type into a formatter
-- [FormatByKey](#FormatByKey): pass attributes matching key into a formatter
-- [FormatByFieldType](#FormatByFieldType): pass attributes matching both key and generic type into a formatter
-- [FormatByGroup](#FormatByGroup): pass attributes under a group into a formatter
-- [FormatByGroupKey](#FormatByGroupKey): pass attributes under a group and matching key, into a formatter
-- [FormatByGroupKeyType](#FormatByGroupKeyType): pass attributes under a group, matching key and matching a generic type, into a formatter
 
 ### NewFormatterHandler
 
