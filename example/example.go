@@ -42,7 +42,7 @@ func (p Person) LogValue() slog.Value {
 	return slog.StringValue(fmt.Sprintf("%s %s", p.firstname, p.lastname))
 }
 
-func main() {
+func example() {
 	logger := slog.New(
 		slogformatter.NewFormatterHandler(
 			slogformatter.FormatByType(func(e *myError) slog.Value {
@@ -102,4 +102,8 @@ func main() {
 		WithGroup("a-group").
 		With("hello", "world").
 		Error("A message")
+}
+
+func main() {
+	example()
 }

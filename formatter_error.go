@@ -2,6 +2,8 @@ package slogformatter
 
 import (
 	"reflect"
+	"regexp"
+	"runtime"
 
 	"golang.org/x/exp/slog"
 )
@@ -25,9 +27,25 @@ func ErrorFormatter(fieldName string) Formatter {
 		values := []slog.Attr{
 			slog.String("message", err.Error()),
 			slog.String("type", reflect.TypeOf(err).String()),
-			// @TODO: inject stracktrace
+			slog.String("stacktrace", stacktrace()),
 		}
 
 		return slog.GroupValue(values...)
 	})
+}
+
+// var reStacktrace = regexp.MustCompile(`slog.*\n`)
+var reStacktrace = regexp.MustCompile(`golang.org/x/exp@v0.0.0-.*/slog/.*\n`)
+
+func stacktrace() string {
+	stackInfo := make([]byte, 1024*1024)
+
+	if stackSize := runtime.Stack(stackInfo, false); stackSize > 0 {
+		traceLines := reStacktrace.Split(string(stackInfo[:stackSize]), -1)
+		if len(traceLines) > 0 {
+			return traceLines[len(traceLines)-1]
+		}
+	}
+
+	return ""
 }

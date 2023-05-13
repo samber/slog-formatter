@@ -249,6 +249,7 @@ logger.Error("a message", slog.Any("error", err))
 //   "error": {
 //     "message": "an error",
 //     "type": "*errors.errorString"
+//     "stacktrace": "main.main()\n\t/Users/samber/src/github.com/samber/slog-formatter/example/example.go:108 +0x1c\n"
 //   }
 // }
 ```
