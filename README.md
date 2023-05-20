@@ -372,7 +372,7 @@ logger.
 // }
 ```
 
-### FlattenFormatterMiddlewareOptions
+### FlattenFormatterMiddleware
 
 A formatter middleware that flatten attributes recursively.
 
