@@ -5,6 +5,7 @@ import (
 	"os"
 
 	slogformatter "github.com/samber/slog-formatter"
+	slogmulti "github.com/samber/slog-multi"
 	"golang.org/x/exp/slog"
 )
 
@@ -104,6 +105,24 @@ func example() {
 		Error("A message")
 }
 
+func exampleFlatten() {
+	logger := slog.New(
+		slogmulti.
+			Pipe(slogformatter.FlattenFormatterMiddlewareOptions{Separator: ".", Prefix: "attrs", IgnorePath: false}.NewFlattenFormatterMiddlewareOptions()).
+			Handler(slog.NewJSONHandler(os.Stdout)),
+	)
+
+	logger.
+		With("email", "samuel@acme.org").
+		With("environment", "dev").
+		WithGroup("group1").
+		With("hello", "world").
+		WithGroup("group2").
+		With("hello", "world").
+		Error("A message", "foo", "bar")
+}
+
 func main() {
 	example()
+	// exampleFlatten()
 }

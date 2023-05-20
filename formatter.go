@@ -55,7 +55,6 @@ func FormatByKey(key string, formatter func(slog.Value) slog.Value) Formatter {
 		}
 
 		return formatter(value), true
-
 	}
 }
 

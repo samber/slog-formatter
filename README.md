@@ -25,6 +25,7 @@ Common formatters for [slog](https://pkg.go.dev/golang.org/x/exp/slog) library +
 - [HTTPResponseFormatter](#HTTPRequestFormatter-and-HTTPResponseFormatter): transforms a *http.Response into a readable object
 - [PIIFormatter](#PIIFormatter): hide private Personal Identifiable Information (PII)
 - [IPAddressFormatter](#IPAddressFormatter): hide ip address from logs
+- [FlattenFormatterMiddlewareOptions](#FlattenFormatterMiddlewareOptions): returns a formatter middleware that flatten attributes recursively
 
 **Custom formatter:**
 - [Format](#Format): pass any attribute into a formatter
@@ -367,6 +368,45 @@ logger.
 //   "level": "ERROR",
 //   "msg": "an error",
 //   "ip_address": "*******",
+// }
+```
+
+### FlattenFormatterMiddlewareOptions
+
+A formatter middleware that flatten attributes recursively.
+
+```go
+import (
+	slogformatter "github.com/samber/slog-formatter"
+	slogmulti "github.com/samber/slog-multi"
+	"golang.org/x/exp/slog"
+)
+
+logger := slog.New(
+    slogmulti.
+        Pipe(slogformatter.FlattenFormatterMiddlewareOptions{Separator: ".", Prefix: "attrs", IgnorePath: false}.NewFlattenFormatterMiddlewareOptions()).
+        Handler(slog.NewJSONHandler(os.Stdout)),
+)
+
+logger.
+    With("email", "samuel@acme.org").
+    With("environment", "dev").
+    WithGroup("group1").
+    With("hello", "world").
+    WithGroup("group2").
+    With("hello", "world").
+    Error("A message", "foo", "bar")
+
+// outputs:
+// {
+//   "time": "2023-05-20T22:14:55.857065+02:00",
+//   "level": "ERROR",
+//   "msg": "A message",
+//   "attrs.email": "samuel@acme.org",
+//   "attrs.environment": "dev",
+//   "attrs.group1.hello": "world",
+//   "attrs.group1.group2.hello": "world",
+//   "foo": "bar"
 // }
 ```
 
