@@ -124,5 +124,5 @@ func exampleFlatten() {
 
 func main() {
 	example()
-	// exampleFlatten()
+	exampleFlatten()
 }
