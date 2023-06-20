@@ -174,7 +174,7 @@ formatter3 := slogformatter.FormatByType(func(u User) slog.Value {
 })
 
 formattingMiddleware := slogformatter.NewFormatterHandler(formatter1, formatter2, formatter3)
-sink := slog.HandlerOptions{}.NewJSONHandler(os.Stderr)
+sink := slog.NewJSONHandler(os.Stderr, slog.HandlerOptions{})
 
 logger := slog.New(
     slogmulti.
