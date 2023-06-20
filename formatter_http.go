@@ -16,9 +16,9 @@ func HTTPRequestFormatter(ignoreHeaders bool) Formatter {
 		if !ignoreHeaders {
 			headers = slog.Group(
 				"headers",
-				lo.MapToSlice(req.Header, func(key string, values []string) slog.Attr {
+				lo.ToAnySlice(lo.MapToSlice(req.Header, func(key string, values []string) slog.Attr {
 					return slog.String(key, strings.Join(values, ","))
-				})...,
+				}))...,
 			)
 		}
 
@@ -36,9 +36,9 @@ func HTTPRequestFormatter(ignoreHeaders bool) Formatter {
 				slog.String("fragment", req.URL.Fragment),
 				slog.Group(
 					"query",
-					lo.MapToSlice(req.URL.Query(), func(key string, values []string) slog.Attr {
+					lo.ToAnySlice(lo.MapToSlice(req.URL.Query(), func(key string, values []string) slog.Attr {
 						return slog.String(key, strings.Join(values, ","))
-					})...,
+					}))...,
 				),
 			),
 			headers,
@@ -54,9 +54,9 @@ func HTTPResponseFormatter(ignoreHeaders bool) Formatter {
 		if !ignoreHeaders {
 			headers = slog.Group(
 				"headers",
-				lo.MapToSlice(res.Header, func(key string, values []string) slog.Attr {
+				lo.ToAnySlice(lo.MapToSlice(res.Header, func(key string, values []string) slog.Attr {
 					return slog.String(key, strings.Join(values, ","))
-				})...,
+				}))...,
 			)
 		}
 

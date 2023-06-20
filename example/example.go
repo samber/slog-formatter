@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/samber/lo"
 	slogformatter "github.com/samber/slog-formatter"
 	slogmulti "github.com/samber/slog-multi"
 	"golang.org/x/exp/slog"
@@ -63,13 +64,13 @@ func example() {
 				return slog.GroupValue(
 					slog.Group(
 						"address",
-						attrs...,
+						lo.ToAnySlice(attrs)...,
 					),
 				)
 			}),
 			slogformatter.PIIFormatter("hq"),
 		)(
-			slog.NewJSONHandler(os.Stdout),
+			slog.NewJSONHandler(os.Stdout, nil),
 		),
 	)
 
@@ -109,7 +110,7 @@ func exampleFlatten() {
 	logger := slog.New(
 		slogmulti.
 			Pipe(slogformatter.FlattenFormatterMiddlewareOptions{Separator: ".", Prefix: "attrs", IgnorePath: false}.NewFlattenFormatterMiddlewareOptions()).
-			Handler(slog.NewJSONHandler(os.Stdout)),
+			Handler(slog.NewJSONHandler(os.Stdout, nil)),
 	)
 
 	logger.
