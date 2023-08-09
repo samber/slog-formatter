@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"os"
 
+	"log/slog"
+
 	"github.com/samber/lo"
 	slogformatter "github.com/samber/slog-formatter"
 	slogmulti "github.com/samber/slog-multi"
-	"golang.org/x/exp/slog"
 )
 
 type myError struct {

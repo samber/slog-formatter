@@ -3,8 +3,9 @@ package slogformatter
 import (
 	"time"
 
+	"log/slog"
+
 	"github.com/samber/lo"
-	"golang.org/x/exp/slog"
 )
 
 // TimeFormatter transforms a `time.Time` into a readable string.

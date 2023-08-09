@@ -2,7 +2,7 @@
 # slog: Attribute formatting
 
 [![tag](https://img.shields.io/github/tag/samber/slog-formatter.svg)](https://github.com/samber/slog-formatter/releases)
-![Go Version](https://img.shields.io/badge/Go-%3E%3D%201.20.3-%23007d9c)
+![Go Version](https://img.shields.io/badge/Go-%3E%3D%201.21-%23007d9c)
 [![GoDoc](https://godoc.org/github.com/samber/slog-formatter?status.svg)](https://pkg.go.dev/github.com/samber/slog-formatter)
 ![Build Status](https://github.com/samber/slog-formatter/actions/workflows/test.yml/badge.svg)
 [![Go report](https://goreportcard.com/badge/github.com/samber/slog-formatter)](https://goreportcard.com/report/github.com/samber/slog-formatter)
@@ -10,7 +10,7 @@
 [![Contributors](https://img.shields.io/github/contributors/samber/slog-formatter)](https://github.com/samber/slog-formatter/graphs/contributors)
 [![License](https://img.shields.io/github/license/samber/slog-formatter)](./LICENSE)
 
-Common formatters for [slog](https://pkg.go.dev/golang.org/x/exp/slog) library + helpers for building your own.
+Common formatters for [slog](https://pkg.go.dev/log/slog) library + helpers for building your own.
 
 **Handlers:**
 - [NewFormatterHandler](#NewFormatterHandler): main handler
@@ -66,11 +66,9 @@ Common formatters for [slog](https://pkg.go.dev/golang.org/x/exp/slog) library +
 go get github.com/samber/slog-formatter
 ```
 
-**Compatibility**: go >= 1.20.3
+**Compatibility**: go >= 1.21
 
-This library is v0 and follows SemVer strictly. On `slog` final release (go 1.21), this library will go v1.
-
-No breaking changes will be made to exported APIs before v1.0.0.
+No breaking changes will be made to exported APIs before v2.0.0.
 
 ⚠️ Warnings:
 - in some case, you should consider implementing `slog.LogValuer` instead of using this library.
@@ -83,7 +81,7 @@ The following example has 3 formatters that anonymize data, format errors and fo
 ```go
 import (
 	slogformatter "github.com/samber/slog-formatter"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 formatter1 := slogformatter.FormatByKey("very_private_data", func(v slog.Value) slog.Value {
@@ -121,7 +119,7 @@ Returns a slog.Handler that applies formatters to.
 ```go
 import (
 	slogformatter "github.com/samber/slog-formatter"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 type User struct {
@@ -162,7 +160,7 @@ Returns a `slog-multi` middleware that applies formatters to.
 import (
 	slogformatter "github.com/samber/slog-formatter"
 	slogmulti "github.com/samber/slog-multi"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 formatter1 := slogformatter.FormatByKey("very_private_data", func(v slog.Value) slog.Value {
@@ -229,7 +227,7 @@ Transforms a Go error into a readable error.
 ```go
 import (
 	slogformatter "github.com/samber/slog-formatter"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 logger := slog.New(
@@ -263,7 +261,7 @@ Transforms *http.Request and *http.Response into readable objects.
 ```go
 import (
 	slogformatter "github.com/samber/slog-formatter"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 logger := slog.New(
@@ -295,7 +293,7 @@ IDs are kept as is. Values longer than 5 characters have a plain text prefix.
 ```go
 import (
 	slogformatter "github.com/samber/slog-formatter"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 logger := slog.New(
@@ -348,7 +346,7 @@ Transforms an IP address into "********".
 ```go
 import (
 	slogformatter "github.com/samber/slog-formatter"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 logger := slog.New(
@@ -380,7 +378,7 @@ A formatter middleware that flatten attributes recursively.
 import (
 	slogformatter "github.com/samber/slog-formatter"
 	slogmulti "github.com/samber/slog-multi"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 logger := slog.New(

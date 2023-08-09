@@ -3,7 +3,7 @@ package slogformatter
 import (
 	"context"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 type FormatterHandler struct {

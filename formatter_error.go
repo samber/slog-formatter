@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"runtime"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 // ErrorFormatter transforms a go error into a readable error.
@@ -34,8 +34,7 @@ func ErrorFormatter(fieldName string) Formatter {
 	})
 }
 
-// var reStacktrace = regexp.MustCompile(`slog.*\n`)
-var reStacktrace = regexp.MustCompile(`golang.org/x/exp@v0.0.0-.*/slog/.*\n`)
+var reStacktrace = regexp.MustCompile(`log/slog.*\n`)
 
 func stacktrace() string {
 	stackInfo := make([]byte, 1024*1024)

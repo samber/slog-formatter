@@ -4,8 +4,9 @@ import (
 	"net/http"
 	"strings"
 
+	"log/slog"
+
 	"github.com/samber/lo"
-	"golang.org/x/exp/slog"
 )
 
 // HTTPRequestFormatter transforms a *http.Request into a readable object.

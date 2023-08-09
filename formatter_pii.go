@@ -3,8 +3,9 @@ package slogformatter
 import (
 	"strings"
 
+	"log/slog"
+
 	"github.com/samber/lo"
-	"golang.org/x/exp/slog"
 )
 
 // IPAddressFormatter transforms an IP address into "********".

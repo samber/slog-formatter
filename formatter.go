@@ -1,8 +1,9 @@
 package slogformatter
 
 import (
-	"golang.org/x/exp/slices"
-	"golang.org/x/exp/slog"
+	"log/slog"
+
+	"slices"
 )
 
 type LogValuerFunc func(any) (slog.Value, bool)
