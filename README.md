@@ -94,7 +94,7 @@ formatter3 := slogformatter.FormatByType(func(u User) slog.Value {
 
 logger := slog.New(
     slogformatter.NewFormatterHandler(formatter1, formatter2, formatter3)(
-        slog.NewTextHandler(os.Stdout),
+        slog.NewTextHandler(os.Stdout, nil),
     ),
 )
 
@@ -138,7 +138,7 @@ formatter3 := slogformatter.FormatByType(func(u User) slog.Value {
 
 logger := slog.New(
     slogformatter.NewFormatterHandler(formatter1, formatter2, formatter3)(
-        slog.NewTextHandler(os.StdErr),
+        slog.NewTextHandler(os.StdErr, nil),
     ),
 )
 
@@ -234,7 +234,7 @@ logger := slog.New(
     slogformatter.NewFormatterHandler(
         slogformatter.ErrorFormatter("error"),
     )(
-        slog.NewTextHandler(os.Stdout),
+        slog.NewTextHandler(os.Stdout, nil),
     ),
 )
 
@@ -269,7 +269,7 @@ logger := slog.New(
         slogformatter.HTTPRequestFormatter(false),
         slogformatter.HTTPResponseFormatter(false),
     )(
-        slog.NewJSONHandler(os.Stdout),
+        slog.NewJSONHandler(os.Stdout, nil),
     ),
 )
 
@@ -300,7 +300,7 @@ logger := slog.New(
     slogformatter.NewFormatterHandler(
         slogformatter.PIIFormatter("user"),
     )(
-        slog.NewTextHandler(os.Stdout),
+        slog.NewTextHandler(os.Stdout, nil),
     ),
 )
 
@@ -353,7 +353,7 @@ logger := slog.New(
     slogformatter.NewFormatterHandler(
         slogformatter.IPAddressFormatter("ip_address"),
     )(
-        slog.NewTextHandler(os.Stdout),
+        slog.NewTextHandler(os.Stdout, nil),
     ),
 )
 
@@ -384,7 +384,7 @@ import (
 logger := slog.New(
     slogmulti.
         Pipe(slogformatter.FlattenFormatterMiddlewareOptions{Separator: ".", Prefix: "attrs", IgnorePath: false}.NewFlattenFormatterMiddlewareOptions()).
-        Handler(slog.NewJSONHandler(os.Stdout)),
+        Handler(slog.NewJSONHandler(os.Stdout, nil)),
 )
 
 logger.
