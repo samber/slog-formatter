@@ -33,6 +33,8 @@ func (o FlattenFormatterMiddlewareOptions) NewFlattenFormatterMiddlewareOptions(
 	}
 }
 
+var _ slog.Handler = (*FlattenFormatterMiddleware)(nil)
+
 type FlattenFormatterMiddleware struct {
 	next   slog.Handler
 	option FlattenFormatterMiddlewareOptions

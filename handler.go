@@ -6,6 +6,8 @@ import (
 	"log/slog"
 )
 
+var _ slog.Handler = (*FormatterHandler)(nil)
+
 type FormatterHandler struct {
 	groups     []string
 	formatters []Formatter
