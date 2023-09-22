@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"log/slog"
 
@@ -124,7 +125,24 @@ func exampleFlatten() {
 		Error("A message", "foo", "bar")
 }
 
+func exampleTime() {
+	logger := slog.New(
+		slogmulti.
+			Pipe(
+				slogformatter.NewFormatterHandler(
+					slogformatter.TimeFormatter(time.DateTime, time.UTC),
+				),
+			).
+			Handler(slog.NewJSONHandler(os.Stdout, nil)),
+	)
+
+	logger.
+		With("time", time.Now()).
+		Error("A message", "foo", "bar")
+}
+
 func main() {
 	example()
 	exampleFlatten()
+	exampleTime()
 }
