@@ -25,7 +25,7 @@ Common formatters for [slog](https://pkg.go.dev/log/slog) library + helpers for 
 - [HTTPResponseFormatter](#HTTPRequestFormatter-and-HTTPResponseFormatter): transforms a *http.Response into a readable object
 - [PIIFormatter](#PIIFormatter): hide private Personal Identifiable Information (PII)
 - [IPAddressFormatter](#IPAddressFormatter): hide ip address from logs
-- [FlattenFormatterMiddlewareOptions](#FlattenFormatterMiddlewareOptions): returns a formatter middleware that flatten attributes recursively
+- [FlattenFormatterMiddleware](#FlattenFormatterMiddleware): returns a formatter middleware that flatten attributes recursively
 
 **Custom formatter:**
 - [Format](#Format): pass any attribute into a formatter
