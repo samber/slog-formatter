@@ -60,6 +60,7 @@ Common formatters for [slog](https://pkg.go.dev/log/slog) library + helpers for 
 - [slog-microsoft-teams](https://github.com/samber/slog-microsoft-teams): A `slog` handler for `Microsoft Teams`
 - [slog-webhook](https://github.com/samber/slog-webhook): A `slog` handler for `Webhook`
 - [slog-kafka](https://github.com/samber/slog-kafka): A `slog` handler for `Kafka`
+- [slog-nats](https://github.com/samber/slog-nats): A `slog` handler for `NATS`
 - [slog-parquet](https://github.com/samber/slog-parquet): A `slog` handler for `Parquet` + `Object Storage`
 - [slog-zap](https://github.com/samber/slog-zap): A `slog` handler for `Zap`
 - [slog-zerolog](https://github.com/samber/slog-zerolog): A `slog` handler for `Zerolog`
