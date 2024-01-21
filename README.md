@@ -65,6 +65,7 @@ Common formatters for [slog](https://pkg.go.dev/log/slog) library + helpers for 
 - [slog-zap](https://github.com/samber/slog-zap): A `slog` handler for `Zap`
 - [slog-zerolog](https://github.com/samber/slog-zerolog): A `slog` handler for `Zerolog`
 - [slog-logrus](https://github.com/samber/slog-logrus): A `slog` handler for `Logrus`
+- [slog-channel](https://github.com/samber/slog-channel): A `slog` handler for Go channels
 
 ## 🚀 Install
 
