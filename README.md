@@ -46,6 +46,7 @@ Common formatters for [slog](https://pkg.go.dev/log/slog) library + helpers for 
 - [slog-echo](https://github.com/samber/slog-echo): Echo middleware for `slog` logger
 - [slog-fiber](https://github.com/samber/slog-fiber): Fiber middleware for `slog` logger
 - [slog-chi](https://github.com/samber/slog-chi): Chi middleware for `slog` logger
+- [slog-http](https://github.com/samber/slog-http): `net/http` middleware for `slog` logger
 - [slog-datadog](https://github.com/samber/slog-datadog): A `slog` handler for `Datadog`
 - [slog-rollbar](https://github.com/samber/slog-rollbar): A `slog` handler for `Rollbar`
 - [slog-sentry](https://github.com/samber/slog-sentry): A `slog` handler for `Sentry`
