@@ -34,6 +34,7 @@ func ErrorFormatter(fieldName string) Formatter {
 	})
 }
 
+// bearer:disable go_lang_permissive_regex_validation
 var reStacktrace = regexp.MustCompile(`log/slog.*\n`)
 
 func stacktrace() string {
