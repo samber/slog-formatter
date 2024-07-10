@@ -54,6 +54,11 @@ func (h *FormatterHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 
 // WithGroup implements slog.Handler.
 func (h *FormatterHandler) WithGroup(name string) slog.Handler {
+	// https://cs.opensource.google/go/x/exp/+/46b07846:slog/handler.go;l=247
+	if name == "" {
+		return h
+	}
+
 	return &FormatterHandler{
 		groups:     append(h.groups, name),
 		formatters: h.formatters,
