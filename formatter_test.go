@@ -37,7 +37,9 @@ func TestFormatByKind(t *testing.T) {
 
 					is.Len(attrs, 2)
 					is.Equal(attrs["key"], slog.StringValue("value"))
-					is.Equal(attrs["duration"], slog.StringValue("1s"))
+					is.Equal(attrs["subgroup"].Kind(), slog.KindGroup)
+					is.Equal(attrs["subgroup"].Group()[0].Key, "duration")
+					is.Equal(attrs["subgroup"].Group()[0].Value, slog.StringValue("1s"))
 
 					atomic.AddInt32(&checked, 1)
 					return nil
@@ -48,7 +50,10 @@ func TestFormatByKind(t *testing.T) {
 
 	logger.Info("hello world",
 		slog.String("key", "value"),
-		slog.Duration("duration", 1*time.Second))
+		slog.Group("subgroup",
+			slog.Duration("duration", 1*time.Second),
+		),
+	)
 
 	is.Equal(int32(1), atomic.LoadInt32(&checked))
 }
@@ -79,7 +84,9 @@ func TestFormatByKey(t *testing.T) {
 
 					is.Len(attrs, 2)
 					is.Equal(attrs["key"], slog.StringValue("value"))
-					is.Equal(attrs["duration"], slog.StringValue("1s"))
+					is.Equal(attrs["subgroup"].Kind(), slog.KindGroup)
+					is.Equal(attrs["subgroup"].Group()[0].Key, "duration")
+					is.Equal(attrs["subgroup"].Group()[0].Value, slog.StringValue("1s"))
 
 					atomic.AddInt32(&checked, 1)
 					return nil
@@ -90,7 +97,10 @@ func TestFormatByKey(t *testing.T) {
 
 	logger.Info("hello world",
 		slog.String("key", "value"),
-		slog.Duration("duration", 1*time.Second))
+		slog.Group("subgroup",
+			slog.Duration("duration", 1*time.Second),
+		),
+	)
 
 	is.Equal(int32(1), atomic.LoadInt32(&checked))
 }

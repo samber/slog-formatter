@@ -29,6 +29,24 @@ func FormatByType[T any](formatter func(T) slog.Value) Formatter {
 			return formatter(v), true
 		}
 
+		if value.Kind() == slog.KindGroup {
+			updated := false
+			attrs := []slog.Attr{}
+
+			for _, attr := range value.Group() {
+				if v, ok := value.Any().(T); ok {
+					attrs = append(attrs, slog.Attr{Key: attr.Key, Value: formatter(v)})
+					updated = true
+				} else {
+					attrs = append(attrs, attr)
+				}
+			}
+
+			if updated {
+				return slog.GroupValue(attrs...), true
+			}
+		}
+
 		return value, false
 	}
 }
@@ -42,6 +60,24 @@ func FormatByKind(kind slog.Kind, formatter func(slog.Value) slog.Value) Formatt
 			return formatter(value), true
 		}
 
+		if value.Kind() == slog.KindGroup {
+			updated := false
+			attrs := []slog.Attr{}
+
+			for _, attr := range value.Group() {
+				if attr.Value.Kind() == kind {
+					attrs = append(attrs, slog.Attr{Key: attr.Key, Value: formatter(attr.Value)})
+					updated = true
+				} else {
+					attrs = append(attrs, attr)
+				}
+			}
+
+			if updated {
+				return slog.GroupValue(attrs...), true
+			}
+		}
+
 		return value, false
 	}
 }
@@ -51,11 +87,29 @@ func FormatByKey(key string, formatter func(slog.Value) slog.Value) Formatter {
 	return func(_ []string, attr slog.Attr) (slog.Value, bool) {
 		value := attr.Value
 
-		if attr.Key != key {
-			return value, false
+		if attr.Key == key {
+			return formatter(value), true
 		}
 
-		return formatter(value), true
+		if value.Kind() == slog.KindGroup {
+			updated := false
+			attrs := []slog.Attr{}
+
+			for _, attr := range value.Group() {
+				if attr.Key == key {
+					attrs = append(attrs, slog.Attr{Key: attr.Key, Value: formatter(attr.Value)})
+					updated = true
+				} else {
+					attrs = append(attrs, attr)
+				}
+			}
+
+			if updated {
+				return slog.GroupValue(attrs...), true
+			}
+		}
+
+		return value, false
 	}
 }
 
