@@ -5,7 +5,7 @@ go 1.21
 require github.com/samber/slog-multi v1.1.0
 
 require (
-	github.com/samber/lo v1.44.0
+	github.com/samber/lo v1.47.0
 	github.com/samber/slog-mock v0.1.0
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/goleak v1.3.0
