@@ -24,7 +24,7 @@ func TestRecoverHandlerError_ok(t *testing.T) {
 	)
 
 	is.False(errored)
-	recover(slog.NewJSONHandler(io.Discard, nil)).Handle(context.Background(), slog.Record{})
+	_ = recover(slog.NewJSONHandler(io.Discard, nil)).Handle(context.Background(), slog.Record{})
 	is.False(errored)
 }
 
@@ -45,7 +45,7 @@ func TestRecoverHandlerError_error(t *testing.T) {
 	})
 
 	is.False(errored)
-	recover(handler(&slog.JSONHandler{})).Handle(context.Background(), slog.Record{})
+	_ = recover(handler(&slog.JSONHandler{})).Handle(context.Background(), slog.Record{})
 	is.True(errored)
 }
 
@@ -66,7 +66,7 @@ func TestRecoverHandlerError_panicError(t *testing.T) {
 	})
 
 	is.False(errored)
-	recover(handler(&slog.JSONHandler{})).Handle(context.Background(), slog.Record{})
+	_ = recover(handler(&slog.JSONHandler{})).Handle(context.Background(), slog.Record{})
 	is.True(errored)
 }
 
@@ -87,6 +87,6 @@ func TestRecoverHandlerError_panicAny(t *testing.T) {
 	})
 
 	is.False(errored)
-	recover(handler(&slog.JSONHandler{})).Handle(context.Background(), slog.Record{})
+	_ = recover(handler(&slog.JSONHandler{})).Handle(context.Background(), slog.Record{})
 	is.True(errored)
 }
