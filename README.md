@@ -30,6 +30,7 @@ Common formatters for [slog](https://pkg.go.dev/log/slog) library + helpers for 
 **Handlers:**
 - [NewFormatterHandler](#NewFormatterHandler): main handler
 - [NewFormatterMiddleware](#NewFormatterMiddleware): compatible with `slog-multi` middlewares
+- [RecoverHandlerError](#RecoverHandlerError): catch panics and error from handlers
 
 **Common formatters:**
 - [TimeFormatter](#TimeFormatter): transforms a `time.Time` into a readable string
@@ -212,6 +213,41 @@ sink := slog.NewJSONHandler(os.Stderr, slog.HandlerOptions{})
 logger := slog.New(
     slogmulti.
         Pipe(formattingMiddleware).
+        Handler(sink),
+)
+
+err := fmt.Errorf("an error")
+logger.Error("a message",
+    slog.Any("very_private_data", "abcd"),
+    slog.Any("user", user),
+    slog.Any("err", err))
+
+// outputs:
+// time=2023-04-10T14:00:0.000000+00:00 level=ERROR msg="a message" error.message="an error" error.type="*errors.errorString" user="John doe" very_private_data="********"
+```
+
+### RecoverHandlerError
+
+Returns a `slog.Handler` that recovers from panics or error of the chain of handlers.
+
+```go
+import (
+	slogformatter "github.com/samber/slog-formatter"
+	slogmulti "github.com/samber/slog-multi"
+	"log/slog"
+)
+
+recovery := RecoverHandlerError(
+    func(ctx context.Context, record slog.Record, err error) {
+        // will be called only if subsequent handlers fail and return an error
+        log.Println(err.Error())
+    },
+)
+sink := NewSinkHandler(...)
+
+logger := slog.New(
+    slogmulti.
+        Pipe(recovery).
         Handler(sink),
 )
 
