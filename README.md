@@ -21,7 +21,7 @@ Common formatters for [slog](https://pkg.go.dev/log/slog) library + helpers for 
       <img src="https://github.com/user-attachments/assets/b1f2e876-0954-4dc3-824d-935d29ba8f3f" width="200" alt="Dash0">
     </div>
     <div>
-      100% OpenTelemetry-native observability platform—simple to use, built on open standards, and designed for full cost control.
+      100% OpenTelemetry-native observability platform<br>Simple to use, built on open standards, and designed for full cost control
     </div>
   </a>
   <hr>
