@@ -2,7 +2,7 @@ module github.com/samber/slog-formatter
 
 go 1.21
 
-require github.com/samber/slog-multi v1.4.1
+require github.com/samber/slog-multi v1.5.0
 
 require (
 	github.com/samber/lo v1.51.0
