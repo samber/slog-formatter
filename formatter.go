@@ -10,7 +10,7 @@ type LogValuerFunc func(any) (slog.Value, bool)
 type Formatter func(groups []string, attr slog.Attr) (slog.Value, bool)
 
 // Format pass every attributes into a formatter.
-func Format[T any](formatter func([]string, string, slog.Value) slog.Value) Formatter {
+func Format(formatter func([]string, string, slog.Value) slog.Value) Formatter {
 	return func(groups []string, attr slog.Attr) (slog.Value, bool) {
 		return formatter(groups, attr.Key, attr.Value), true
 	}
