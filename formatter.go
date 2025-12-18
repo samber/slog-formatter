@@ -11,17 +11,53 @@ type Formatter func(groups []string, attr slog.Attr) (slog.Value, bool)
 
 // Format pass every attributes into a formatter.
 func Format(formatter func([]string, string, slog.Value) slog.Value) Formatter {
+	var formatRecursive func([]string, slog.Attr) slog.Value
+	formatRecursive = func(groups []string, attr slog.Attr) slog.Value {
+		value := attr.Value
+
+		if value.Kind() == slog.KindGroup {
+			attrs := []slog.Attr{}
+			nestedGroups := append(groups, attr.Key)
+
+			for _, nestedAttr := range value.Group() {
+				formattedValue := formatRecursive(nestedGroups, nestedAttr)
+				attrs = append(attrs, slog.Attr{Key: nestedAttr.Key, Value: formattedValue})
+			}
+
+			return slog.GroupValue(attrs...)
+		}
+
+		return formatter(groups, attr.Key, value)
+	}
+
 	return func(groups []string, attr slog.Attr) (slog.Value, bool) {
-		return formatter(groups, attr.Key, attr.Value), true
+		return formatRecursive(groups, attr), true
 	}
 }
 
 // FormatByType pass attributes matching generic type into a formatter.
 func FormatByType[T any](formatter func(T) slog.Value) Formatter {
-	return func(_ []string, attr slog.Attr) (slog.Value, bool) {
+	var formatRecursive func([]string, slog.Attr) (slog.Value, bool)
+	formatRecursive = func(groups []string, attr slog.Attr) (slog.Value, bool) {
 		value := attr.Value
 
 		if value.Kind() == slog.KindGroup {
+			updated := false
+			attrs := []slog.Attr{}
+			nestedGroups := append(groups, attr.Key)
+
+			for _, nestedAttr := range value.Group() {
+				if nestedFormatted, ok := formatRecursive(nestedGroups, nestedAttr); ok {
+					attrs = append(attrs, slog.Attr{Key: nestedAttr.Key, Value: nestedFormatted})
+					updated = true
+				} else {
+					attrs = append(attrs, nestedAttr)
+				}
+			}
+
+			if updated {
+				return slog.GroupValue(attrs...), true
+			}
 			return value, false
 		}
 
@@ -29,62 +65,52 @@ func FormatByType[T any](formatter func(T) slog.Value) Formatter {
 			return formatter(v), true
 		}
 
+		return value, false
+	}
+
+	return formatRecursive
+}
+
+// FormatByKind pass attributes matching `slog.Kind` into a formatter.
+func FormatByKind(kind slog.Kind, formatter func(slog.Value) slog.Value) Formatter {
+	var formatRecursive func([]string, slog.Attr) (slog.Value, bool)
+	formatRecursive = func(groups []string, attr slog.Attr) (slog.Value, bool) {
+		value := attr.Value
+
 		if value.Kind() == slog.KindGroup {
 			updated := false
 			attrs := []slog.Attr{}
+			nestedGroups := append(groups, attr.Key)
 
-			for _, attr := range value.Group() {
-				if v, ok := value.Any().(T); ok {
-					attrs = append(attrs, slog.Attr{Key: attr.Key, Value: formatter(v)})
+			for _, nestedAttr := range value.Group() {
+				if nestedFormatted, ok := formatRecursive(nestedGroups, nestedAttr); ok {
+					attrs = append(attrs, slog.Attr{Key: nestedAttr.Key, Value: nestedFormatted})
 					updated = true
 				} else {
-					attrs = append(attrs, attr)
+					attrs = append(attrs, nestedAttr)
 				}
 			}
 
 			if updated {
 				return slog.GroupValue(attrs...), true
 			}
+			return value, false
 		}
-
-		return value, false
-	}
-}
-
-// FormatByKind pass attributes matching `slog.Kind` into a formatter.
-func FormatByKind(kind slog.Kind, formatter func(slog.Value) slog.Value) Formatter {
-	return func(_ []string, attr slog.Attr) (slog.Value, bool) {
-		value := attr.Value
 
 		if value.Kind() == kind {
 			return formatter(value), true
 		}
 
-		if value.Kind() == slog.KindGroup {
-			updated := false
-			attrs := []slog.Attr{}
-
-			for _, attr := range value.Group() {
-				if attr.Value.Kind() == kind {
-					attrs = append(attrs, slog.Attr{Key: attr.Key, Value: formatter(attr.Value)})
-					updated = true
-				} else {
-					attrs = append(attrs, attr)
-				}
-			}
-
-			if updated {
-				return slog.GroupValue(attrs...), true
-			}
-		}
-
 		return value, false
 	}
+
+	return formatRecursive
 }
 
 // FormatByKey pass attributes matching key into a formatter.
 func FormatByKey(key string, formatter func(slog.Value) slog.Value) Formatter {
-	return func(_ []string, attr slog.Attr) (slog.Value, bool) {
+	var formatRecursive func([]string, slog.Attr) (slog.Value, bool)
+	formatRecursive = func(groups []string, attr slog.Attr) (slog.Value, bool) {
 		value := attr.Value
 
 		if attr.Key == key {
@@ -94,23 +120,27 @@ func FormatByKey(key string, formatter func(slog.Value) slog.Value) Formatter {
 		if value.Kind() == slog.KindGroup {
 			updated := false
 			attrs := []slog.Attr{}
+			nestedGroups := append(groups, attr.Key)
 
-			for _, attr := range value.Group() {
-				if attr.Key == key {
-					attrs = append(attrs, slog.Attr{Key: attr.Key, Value: formatter(attr.Value)})
+			for _, nestedAttr := range value.Group() {
+				if nestedFormatted, ok := formatRecursive(nestedGroups, nestedAttr); ok {
+					attrs = append(attrs, slog.Attr{Key: nestedAttr.Key, Value: nestedFormatted})
 					updated = true
 				} else {
-					attrs = append(attrs, attr)
+					attrs = append(attrs, nestedAttr)
 				}
 			}
 
 			if updated {
 				return slog.GroupValue(attrs...), true
 			}
+			return value, false
 		}
 
 		return value, false
 	}
+
+	return formatRecursive
 }
 
 // FormatByFieldType pass attributes matching both key and generic type into a formatter.
