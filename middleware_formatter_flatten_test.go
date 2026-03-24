@@ -4,6 +4,7 @@ import (
 	"io"
 	"log/slog"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -115,10 +116,15 @@ func TestFlattenAttrs_AllKinds(t *testing.T) {
 		slog.Int64("int", 99),
 		slog.Uint64("uint", 100),
 		slog.String("str", "hello"),
+		slog.Time("time", time.Now()),
+		slog.Group("group", slog.String("nested", "val")),
 	}
 
 	result := FlattenAttrs(attrs)
-	is.Len(result, 7)
+	// 7 scalar kinds + 1 time + 1 group (flattened to its child "nested") = 9
+	is.Len(result, 9)
+	// Verify group was flattened (last element should be the nested attr)
+	is.Equal("nested", result[8].Key)
 }
 
 func TestFlattenAttrsWithPrefix_Simple(t *testing.T) {
@@ -152,7 +158,7 @@ func TestFlattenAttrsWithPrefix_Nested(t *testing.T) {
 	is.Equal("val", result[0].Value.String())
 }
 
-func TestFlattenAttrsWithPrefix_DeepNested(t *testing.T) {
+func TestFlattenAttrsWithPrefix_DeepNested_KnownBehavior(t *testing.T) {
 	t.Parallel()
 	is := assert.New(t)
 
@@ -164,9 +170,13 @@ func TestFlattenAttrsWithPrefix_DeepNested(t *testing.T) {
 		),
 	}
 
+	// Note: the double separator ("root.a..b.leaf") is a known quirk of the
+	// current FlattenAttrsWithPrefix implementation. The inner recursive call
+	// passes an empty prefix which produces an extra separator when concatenated.
+	// This test documents the existing behavior to prevent accidental changes.
 	result := FlattenAttrsWithPrefix(".", "root", attrs)
 	is.Len(result, 1)
-	is.Equal("root.a..b.leaf", result[0].Key) // current behavior
+	is.Equal("root.a..b.leaf", result[0].Key)
 	is.Equal("val", result[0].Value.String())
 }
 

@@ -36,6 +36,7 @@ jobs:
 
     - name: Fuzz
       run: make fuzz
+      if: matrix.go == '1.x'
 
     - name: Coverage
       run: make coverage

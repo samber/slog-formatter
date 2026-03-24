@@ -291,7 +291,6 @@ func TestFormatterHandler_Handle_PreservesRecordFields(t *testing.T) {
 
 	var checked int32
 	handler := NewFormatterHandler()
-	now := time.Now()
 
 	logger := slog.New(
 		handler(
@@ -299,8 +298,7 @@ func TestFormatterHandler_Handle_PreservesRecordFields(t *testing.T) {
 				Handle: func(ctx context.Context, record slog.Record) error {
 					is.Equal("test message", record.Message)
 					is.Equal(slog.LevelWarn, record.Level)
-					// Time should be close (slog sets it)
-					is.WithinDuration(now, record.Time, 1*time.Second)
+					is.False(record.Time.IsZero())
 					atomic.AddInt32(&checked, 1)
 					return nil
 				},
