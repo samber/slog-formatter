@@ -288,7 +288,6 @@ func TestRecursiveFormatterEdgeCases(t *testing.T) {
 	t.Parallel()
 	is := assert.New(t)
 
-	// Test empty groups
 	t.Run("empty groups in Format", func(t *testing.T) {
 		called := false
 		handler := NewFormatterMiddleware(
@@ -313,7 +312,6 @@ func TestRecursiveFormatterEdgeCases(t *testing.T) {
 		is.True(called, "formatter should be called")
 	})
 
-	// Test multiple matching keys in different levels
 	t.Run("multiple matches in different levels", func(t *testing.T) {
 		handler := NewFormatterMiddleware(
 			FormatByKey("target", func(v slog.Value) slog.Value {
@@ -327,7 +325,6 @@ func TestRecursiveFormatterEdgeCases(t *testing.T) {
 				slogmock.Option{
 					Handle: func(ctx context.Context, record slog.Record) error {
 						record.Attrs(func(attr slog.Attr) bool {
-							// Count formatted values
 							if attr.Key == "target" {
 								is.Equal("formatted_level1", attr.Value.String())
 								formattedCount++
@@ -358,4 +355,411 @@ func TestRecursiveFormatterEdgeCases(t *testing.T) {
 
 		is.Equal(2, formattedCount, "should format all 2 matching attributes")
 	})
+}
+
+func TestFormat_GroupsSlicePropagation(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	var capturedGroups [][]string
+	handler := NewFormatterMiddleware(
+		Format(func(groups []string, key string, value slog.Value) slog.Value {
+			cp := make([]string, len(groups))
+			copy(cp, groups)
+			capturedGroups = append(capturedGroups, cp)
+			return value
+		}),
+	)
+
+	logger := slog.New(
+		handler(
+			slogmock.Option{
+				Handle: func(ctx context.Context, record slog.Record) error {
+					return nil
+				},
+			}.NewMockHandler(),
+		),
+	)
+
+	logger.Info("test",
+		slog.String("top", "val"),
+		slog.Group("g1",
+			slog.String("mid", "val"),
+			slog.Group("g2",
+				slog.String("deep", "val"),
+			),
+		),
+	)
+
+	is.Len(capturedGroups, 3)
+	is.Empty(capturedGroups[0])          // top-level
+	is.Equal([]string{"g1"}, capturedGroups[1]) // inside g1
+	is.Equal([]string{"g1", "g2"}, capturedGroups[2]) // inside g1.g2
+}
+
+func TestFormat_EmptyGroup(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	var checked int32
+	handler := NewFormatterMiddleware(
+		Format(func(groups []string, key string, value slog.Value) slog.Value {
+			return value
+		}),
+	)
+
+	logger := slog.New(
+		handler(
+			slogmock.Option{
+				Handle: func(ctx context.Context, record slog.Record) error {
+					record.Attrs(func(attr slog.Attr) bool {
+						if attr.Key == "empty" {
+							is.Equal(slog.KindGroup, attr.Value.Kind())
+							is.Empty(attr.Value.Group())
+						}
+						return true
+					})
+					atomic.AddInt32(&checked, 1)
+					return nil
+				},
+			}.NewMockHandler(),
+		),
+	)
+
+	logger.Info("test", slog.Group("empty"))
+	is.Equal(int32(1), atomic.LoadInt32(&checked))
+}
+
+func TestFormatByType_NoMatch(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByType[time.Duration](func(v time.Duration) slog.Value {
+		return slog.StringValue(v.String())
+	})
+
+	// String attr should not match Duration type
+	val, ok := formatter(nil, slog.String("key", "not-a-duration"))
+	is.False(ok)
+	is.Equal("not-a-duration", val.String())
+}
+
+func TestFormatByType_MatchFlat(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByType[time.Duration](func(v time.Duration) slog.Value {
+		return slog.StringValue(v.String())
+	})
+
+	val, ok := formatter(nil, slog.Duration("d", 5*time.Second))
+	is.True(ok)
+	is.Equal("5s", val.String())
+}
+
+func TestFormatByFieldType_GroupSkipped(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByFieldType[string]("key", func(v string) slog.Value {
+		return slog.StringValue("formatted")
+	})
+
+	groupAttr := slog.Group("key", slog.String("inner", "val"))
+	val, ok := formatter(nil, groupAttr)
+	is.False(ok)
+	is.Equal(slog.KindGroup, val.Kind())
+}
+
+func TestFormatByFieldType_WrongKey(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByFieldType[string]("target", func(v string) slog.Value {
+		return slog.StringValue("formatted")
+	})
+
+	val, ok := formatter(nil, slog.String("other", "value"))
+	is.False(ok)
+	is.Equal("value", val.String())
+}
+
+func TestFormatByFieldType_WrongType(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByFieldType[int64]("key", func(v int64) slog.Value {
+		return slog.Int64Value(v * 2)
+	})
+
+	// Key matches but type is string, not int64
+	val, ok := formatter(nil, slog.String("key", "not-an-int"))
+	is.False(ok)
+	is.Equal("not-an-int", val.String())
+}
+
+func TestFormatByFieldType_Match(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByFieldType[string]("key", func(v string) slog.Value {
+		return slog.StringValue("formatted_" + v)
+	})
+
+	val, ok := formatter(nil, slog.String("key", "hello"))
+	is.True(ok)
+	is.Equal("formatted_hello", val.String())
+}
+
+func TestFormatByGroup_PathMismatch(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByGroup([]string{"a", "b"}, func(attrs []slog.Attr) slog.Value {
+		return slog.GroupValue(attrs...)
+	})
+
+	groupAttr := slog.Group("b", slog.String("inner", "val"))
+	val, ok := formatter([]string{"x"}, groupAttr) // path is ["x","b"], want ["a","b"]
+	is.False(ok)
+	is.Equal(slog.KindGroup, val.Kind())
+}
+
+func TestFormatByGroup_Match(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByGroup([]string{"parent", "child"}, func(attrs []slog.Attr) slog.Value {
+		return slog.StringValue("flattened")
+	})
+
+	groupAttr := slog.Group("child", slog.String("inner", "val"))
+	val, ok := formatter([]string{"parent"}, groupAttr) // path is ["parent","child"]
+	is.True(ok)
+	is.Equal("flattened", val.String())
+}
+
+func TestFormatByGroup_NonGroupAttr(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByGroup([]string{"a"}, func(attrs []slog.Attr) slog.Value {
+		return slog.StringValue("formatted")
+	})
+
+	// Non-group attr should not match
+	val, ok := formatter(nil, slog.String("a", "val"))
+	is.False(ok)
+	is.Equal("val", val.String())
+}
+
+func TestFormatByGroupKey_Match(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByGroupKey([]string{"parent"}, "target", func(v slog.Value) slog.Value {
+		return slog.StringValue("formatted_" + v.String())
+	})
+
+	val, ok := formatter([]string{"parent"}, slog.String("target", "hello"))
+	is.True(ok)
+	is.Equal("formatted_hello", val.String())
+}
+
+func TestFormatByGroupKey_GroupMismatch(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByGroupKey([]string{"parent"}, "target", func(v slog.Value) slog.Value {
+		return slog.StringValue("formatted")
+	})
+
+	val, ok := formatter([]string{"other"}, slog.String("target", "hello"))
+	is.False(ok)
+	is.Equal("hello", val.String())
+}
+
+func TestFormatByGroupKey_KeyMismatch(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByGroupKey([]string{"parent"}, "target", func(v slog.Value) slog.Value {
+		return slog.StringValue("formatted")
+	})
+
+	val, ok := formatter([]string{"parent"}, slog.String("other", "hello"))
+	is.False(ok)
+	is.Equal("hello", val.String())
+}
+
+func TestFormatByGroupKeyType_Match(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByGroupKeyType[string]([]string{"parent"}, "target", func(v string) slog.Value {
+		return slog.StringValue("formatted_" + v)
+	})
+
+	val, ok := formatter([]string{"parent"}, slog.String("target", "hello"))
+	is.True(ok)
+	is.Equal("formatted_hello", val.String())
+}
+
+func TestFormatByGroupKeyType_TypeMismatch(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByGroupKeyType[int64]([]string{"parent"}, "target", func(v int64) slog.Value {
+		return slog.Int64Value(v * 2)
+	})
+
+	// Key and group match, but type is string not int64
+	val, ok := formatter([]string{"parent"}, slog.String("target", "not-int"))
+	is.False(ok)
+	is.Equal("not-int", val.String())
+}
+
+func TestFormatByGroupKeyType_GroupIsSkipped(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByGroupKeyType[string]([]string{"parent"}, "target", func(v string) slog.Value {
+		return slog.StringValue("formatted")
+	})
+
+	groupAttr := slog.Group("target", slog.String("inner", "val"))
+	val, ok := formatter([]string{"parent"}, groupAttr)
+	is.False(ok)
+	is.Equal(slog.KindGroup, val.Kind())
+}
+
+func TestFormatByKind_NoMatch(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByKind(slog.KindDuration, func(v slog.Value) slog.Value {
+		return slog.StringValue("formatted")
+	})
+
+	val, ok := formatter(nil, slog.String("key", "not-duration"))
+	is.False(ok)
+	is.Equal("not-duration", val.String())
+}
+
+func TestFormatByKey_NoMatch(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByKey("target", func(v slog.Value) slog.Value {
+		return slog.StringValue("formatted")
+	})
+
+	val, ok := formatter(nil, slog.String("other", "value"))
+	is.False(ok)
+	is.Equal("value", val.String())
+}
+
+func TestFormat_DeepNesting_10Levels(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	var maxDepth int
+	handler := NewFormatterMiddleware(
+		Format(func(groups []string, key string, value slog.Value) slog.Value {
+			if len(groups) > maxDepth {
+				maxDepth = len(groups)
+			}
+			if key == "leaf" {
+				return slog.StringValue("formatted_" + value.String())
+			}
+			return value
+		}),
+	)
+
+	var checked int32
+	logger := slog.New(
+		handler(
+			slogmock.Option{
+				Handle: func(ctx context.Context, record slog.Record) error {
+					atomic.AddInt32(&checked, 1)
+					return nil
+				},
+			}.NewMockHandler(),
+		),
+	)
+
+	// Build 10-level deep group
+	leaf := slog.String("leaf", "value")
+	var attr slog.Attr
+	attr = slog.Group("g10", leaf)
+	for i := 9; i >= 1; i-- {
+		attr = slog.Group("g"+string(rune('0'+i)), attr)
+	}
+
+	logger.Info("test", attr)
+	is.Equal(int32(1), atomic.LoadInt32(&checked))
+	is.Equal(10, maxDepth)
+}
+
+func TestFormatByKey_TopLevelMatch(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByKey("target", func(v slog.Value) slog.Value {
+		return slog.StringValue("formatted_" + v.String())
+	})
+
+	val, ok := formatter(nil, slog.String("target", "hello"))
+	is.True(ok)
+	is.Equal("formatted_hello", val.String())
+}
+
+func TestFormatByKind_NestedNoMatch(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	// All children are strings, looking for Int64
+	formatter := FormatByKind(slog.KindInt64, func(v slog.Value) slog.Value {
+		return slog.Int64Value(v.Int64() * 2)
+	})
+
+	groupAttr := slog.Group("g", slog.String("a", "val"), slog.String("b", "val2"))
+	val, ok := formatter(nil, groupAttr)
+	is.False(ok)
+	is.Equal(slog.KindGroup, val.Kind())
+}
+
+func TestFormatByType_NestedMatch(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByType[time.Duration](func(v time.Duration) slog.Value {
+		return slog.StringValue(v.String())
+	})
+
+	groupAttr := slog.Group("g",
+		slog.String("a", "val"),
+		slog.Duration("d", 3*time.Second),
+	)
+	val, ok := formatter(nil, groupAttr)
+	is.True(ok)
+	is.Equal(slog.KindGroup, val.Kind())
+	group := val.Group()
+	is.Len(group, 2)
+	is.Equal("val", group[0].Value.String())
+	is.Equal("3s", group[1].Value.String())
+}
+
+func TestFormatByType_NestedNoMatch(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	formatter := FormatByType[time.Duration](func(v time.Duration) slog.Value {
+		return slog.StringValue(v.String())
+	})
+
+	groupAttr := slog.Group("g", slog.String("a", "val"))
+	val, ok := formatter(nil, groupAttr)
+	is.False(ok)
+	is.Equal(slog.KindGroup, val.Kind())
 }

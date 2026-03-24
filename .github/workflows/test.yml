@@ -34,7 +34,10 @@ jobs:
     - name: Test
       run: make test
 
-    - name: Test
+    - name: Fuzz
+      run: make fuzz
+
+    - name: Coverage
       run: make coverage
 
     - name: Codecov
