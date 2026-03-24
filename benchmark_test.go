@@ -1,7 +1,6 @@
 package slogformatter
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -10,8 +9,6 @@ import (
 	"net/url"
 	"testing"
 	"time"
-
-	slogmock "github.com/samber/slog-mock"
 )
 
 // helpers
@@ -19,19 +16,6 @@ import (
 func newDiscardLogger(formatters ...Formatter) *slog.Logger {
 	handler := NewFormatterHandler(formatters...)
 	return slog.New(handler(slog.NewJSONHandler(io.Discard, nil)))
-}
-
-func newMockLogger(formatters ...Formatter) *slog.Logger {
-	handler := NewFormatterMiddleware(formatters...)
-	return slog.New(
-		handler(
-			slogmock.Option{
-				Handle: func(ctx context.Context, record slog.Record) error {
-					return nil
-				},
-			}.NewMockHandler(),
-		),
-	)
 }
 
 func buildNestedGroup(depth int, leafKey, leafVal string) slog.Attr {

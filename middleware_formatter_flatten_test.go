@@ -1,6 +1,7 @@
 package slogformatter
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"testing"
@@ -309,7 +310,7 @@ func TestFlattenFormatterMiddleware_Enabled(t *testing.T) {
 	inner := slog.NewJSONHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelWarn})
 	handler := middleware(inner)
 
-	is.False(handler.Enabled(nil, slog.LevelInfo))
-	is.True(handler.Enabled(nil, slog.LevelWarn))
-	is.True(handler.Enabled(nil, slog.LevelError))
+	is.False(handler.Enabled(context.Background(), slog.LevelInfo))
+	is.True(handler.Enabled(context.Background(), slog.LevelWarn))
+	is.True(handler.Enabled(context.Background(), slog.LevelError))
 }

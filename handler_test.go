@@ -131,7 +131,7 @@ func TestFormatterHandler_WithAttrs(t *testing.T) {
 	// WithAttrs should pre-transform the attrs
 	h = h.WithAttrs([]slog.Attr{slog.String("preset", "original")})
 	// Trigger a log to see the pre-transformed attr
-	h.Handle(context.Background(), slog.NewRecord(time.Now(), slog.LevelInfo, "test", 0))
+	_ = h.Handle(context.Background(), slog.NewRecord(time.Now(), slog.LevelInfo, "test", 0))
 	is.Equal(int32(1), atomic.LoadInt32(&checked))
 }
 
