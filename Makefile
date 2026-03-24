@@ -12,6 +12,16 @@ bench:
 watch-bench:
 	reflex -t 50ms -s -- sh -c 'go test -benchmem -count 3 -bench ./...'
 
+fuzz:
+	go test -run=^$$ -fuzz=^FuzzFormatByKey$$ -fuzztime=10s .
+	go test -run=^$$ -fuzz=^FuzzFormatByKind$$ -fuzztime=10s .
+	go test -run=^$$ -fuzz=^FuzzPIIFormatter$$ -fuzztime=10s .
+	go test -run=^$$ -fuzz=^FuzzFlattenAttrs$$ -fuzztime=10s .
+	go test -run=^$$ -fuzz=^FuzzTimeFormatter$$ -fuzztime=10s .
+	go test -run=^$$ -fuzz=^FuzzErrorFormatter$$ -fuzztime=10s .
+	go test -run=^$$ -fuzz=^FuzzFormat$$ -fuzztime=10s .
+	go test -run=^$$ -fuzz=^FuzzIPAddressFormatter$$ -fuzztime=10s .
+
 coverage:
 	go test -v -coverprofile=cover.out -covermode=atomic ./...
 	go tool cover -html=cover.out -o cover.html

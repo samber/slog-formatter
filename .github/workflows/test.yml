@@ -34,7 +34,11 @@ jobs:
     - name: Test
       run: make test
 
-    - name: Test
+    - name: Fuzz
+      run: make fuzz
+      if: matrix.go == '1.x'
+
+    - name: Coverage
       run: make coverage
 
     - name: Codecov
