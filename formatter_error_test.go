@@ -182,6 +182,99 @@ func TestErrorFormatter_CustomErrorType(t *testing.T) {
 	is.Equal(int32(1), atomic.LoadInt32(&checked))
 }
 
+func TestStacktrace_NonEmpty(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	var stacktraceValue string
+	handler := NewFormatterMiddleware(ErrorFormatter("error"))
+
+	logger := slog.New(
+		handler(
+			slogmock.Option{
+				Handle: func(ctx context.Context, record slog.Record) error {
+					record.Attrs(func(attr slog.Attr) bool {
+						if attr.Key == "error" && attr.Value.Kind() == slog.KindGroup {
+							for _, a := range attr.Value.Group() {
+								if a.Key == "stacktrace" {
+									stacktraceValue = a.Value.String()
+								}
+							}
+						}
+						return true
+					})
+					return nil
+				},
+			}.NewMockHandler(),
+		),
+	)
+
+	logger.Info("test", slog.Any("error", errors.New("test error")))
+	is.NotEmpty(stacktraceValue, "stacktrace should not be empty")
+}
+
+func TestStacktrace_SkipsSlogFrames(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	var stacktraceValue string
+	handler := NewFormatterMiddleware(ErrorFormatter("error"))
+
+	logger := slog.New(
+		handler(
+			slogmock.Option{
+				Handle: func(ctx context.Context, record slog.Record) error {
+					record.Attrs(func(attr slog.Attr) bool {
+						if attr.Key == "error" && attr.Value.Kind() == slog.KindGroup {
+							for _, a := range attr.Value.Group() {
+								if a.Key == "stacktrace" {
+									stacktraceValue = a.Value.String()
+								}
+							}
+						}
+						return true
+					})
+					return nil
+				},
+			}.NewMockHandler(),
+		),
+	)
+
+	logger.Info("test", slog.Any("error", errors.New("test error")))
+	is.NotContains(stacktraceValue, "log/slog", "stacktrace should not contain slog frames")
+}
+
+func TestStacktrace_ContainsCallerInfo(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	var stacktraceValue string
+	handler := NewFormatterMiddleware(ErrorFormatter("error"))
+
+	logger := slog.New(
+		handler(
+			slogmock.Option{
+				Handle: func(ctx context.Context, record slog.Record) error {
+					record.Attrs(func(attr slog.Attr) bool {
+						if attr.Key == "error" && attr.Value.Kind() == slog.KindGroup {
+							for _, a := range attr.Value.Group() {
+								if a.Key == "stacktrace" {
+									stacktraceValue = a.Value.String()
+								}
+							}
+						}
+						return true
+					})
+					return nil
+				},
+			}.NewMockHandler(),
+		),
+	)
+
+	logger.Info("test", slog.Any("error", errors.New("test error")))
+	is.Contains(stacktraceValue, "formatter_error_test.go", "stacktrace should contain the test file name")
+}
+
 func TestErrorFormatter_NilError(t *testing.T) {
 	t.Parallel()
 	is := assert.New(t)

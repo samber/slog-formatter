@@ -103,17 +103,19 @@ func (h *FlattenFormatterMiddleware) WithGroup(name string) slog.Handler {
 
 // PrefixAttrKeys prefix attribute keys.
 func PrefixAttrKeys(prefix string, attrs []slog.Attr) []slog.Attr {
-	return lo.Map(attrs, func(item slog.Attr, _ int) slog.Attr {
-		return slog.Attr{
+	result := make([]slog.Attr, len(attrs))
+	for i, item := range attrs {
+		result[i] = slog.Attr{
 			Key:   prefix + item.Key,
 			Value: item.Value,
 		}
-	})
+	}
+	return result
 }
 
 // FlattenAttrs flatten attributes recursively.
 func FlattenAttrs(attrs []slog.Attr) []slog.Attr {
-	output := []slog.Attr{}
+	output := make([]slog.Attr, 0, len(attrs))
 
 	for _, attr := range attrs {
 		switch attr.Value.Kind() {
@@ -131,7 +133,7 @@ func FlattenAttrs(attrs []slog.Attr) []slog.Attr {
 
 // FlattenAttrsWithPrefix flatten attributes recursively, with prefix.
 func FlattenAttrsWithPrefix(separator string, prefix string, attrs []slog.Attr) []slog.Attr {
-	output := []slog.Attr{}
+	output := make([]slog.Attr, 0, len(attrs))
 
 	for _, attr := range attrs {
 		switch attr.Value.Kind() {
