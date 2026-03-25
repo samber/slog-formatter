@@ -1,9 +1,9 @@
 package slogformatter
 
 import (
-	"fmt"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"log/slog"
@@ -44,7 +44,12 @@ func stacktrace() string {
 	for {
 		frame, more := frames.Next()
 		if !strings.Contains(frame.Function, "log/slog") {
-			fmt.Fprintf(&b, "%s\n\t%s:%d\n", frame.Function, frame.File, frame.Line)
+			b.WriteString(frame.Function)
+			b.WriteString("\n\t")
+			b.WriteString(frame.File)
+			b.WriteByte(':')
+			b.WriteString(strconv.Itoa(frame.Line))
+			b.WriteByte('\n')
 		}
 		if !more {
 			break

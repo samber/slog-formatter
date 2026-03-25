@@ -68,7 +68,8 @@ func recursivelyHidePII(key string, v slog.Value) slog.Value {
 		group := v.Group()
 		attrs := make([]slog.Attr, len(group))
 		for i, item := range group {
-			attrs[i] = slog.Any(item.Key, recursivelyHidePII(item.Key, item.Value))
+			// Use Attr literal instead of slog.Any to avoid boxing the already-resolved slog.Value into any.
+		attrs[i] = slog.Attr{Key: item.Key, Value: recursivelyHidePII(item.Key, item.Value)}
 		}
 		return slog.GroupValue(attrs...)
 	}
