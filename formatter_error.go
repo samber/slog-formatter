@@ -38,6 +38,9 @@ func ErrorFormatter(fieldName string) Formatter {
 func stacktrace() string {
 	var pcs [32]uintptr
 	n := runtime.Callers(1, pcs[:])
+	if n == 0 {
+		return ""
+	}
 	frames := runtime.CallersFrames(pcs[:n])
 
 	var b strings.Builder
