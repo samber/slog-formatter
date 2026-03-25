@@ -5,9 +5,15 @@ import (
 	"strings"
 
 	"log/slog"
-
-	"github.com/samber/lo"
 )
+
+func headerToAttrs(header http.Header) []any {
+	attrs := make([]any, 0, len(header))
+	for key, values := range header {
+		attrs = append(attrs, slog.String(key, strings.Join(values, ",")))
+	}
+	return attrs
+}
 
 // HTTPRequestFormatter transforms a *http.Request into a readable object.
 func HTTPRequestFormatter(ignoreHeaders bool) Formatter {
@@ -15,12 +21,13 @@ func HTTPRequestFormatter(ignoreHeaders bool) Formatter {
 
 	return FormatByType(func(req *http.Request) slog.Value {
 		if !ignoreHeaders {
-			headers = slog.Group(
-				"headers",
-				lo.ToAnySlice(lo.MapToSlice(req.Header, func(key string, values []string) slog.Attr {
-					return slog.String(key, strings.Join(values, ","))
-				}))...,
-			)
+			headers = slog.Group("headers", headerToAttrs(req.Header)...)
+		}
+
+		queryParams := req.URL.Query()
+		queryAttrs := make([]any, 0, len(queryParams))
+		for key, values := range queryParams {
+			queryAttrs = append(queryAttrs, slog.String(key, strings.Join(values, ",")))
 		}
 
 		return slog.GroupValue(
@@ -35,12 +42,7 @@ func HTTPRequestFormatter(ignoreHeaders bool) Formatter {
 				slog.String("path", req.URL.Path),
 				slog.String("raw_query", req.URL.RawQuery),
 				slog.String("fragment", req.URL.Fragment),
-				slog.Group(
-					"query",
-					lo.ToAnySlice(lo.MapToSlice(req.URL.Query(), func(key string, values []string) slog.Attr {
-						return slog.String(key, strings.Join(values, ","))
-					}))...,
-				),
+				slog.Group("query", queryAttrs...),
 			),
 			headers,
 		)
@@ -53,12 +55,7 @@ func HTTPResponseFormatter(ignoreHeaders bool) Formatter {
 
 	return FormatByType(func(res *http.Response) slog.Value {
 		if !ignoreHeaders {
-			headers = slog.Group(
-				"headers",
-				lo.ToAnySlice(lo.MapToSlice(res.Header, func(key string, values []string) slog.Attr {
-					return slog.String(key, strings.Join(values, ","))
-				}))...,
-			)
+			headers = slog.Group("headers", headerToAttrs(res.Header)...)
 		}
 
 		return slog.GroupValue(

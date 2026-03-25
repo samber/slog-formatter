@@ -4,8 +4,6 @@ import (
 	"strings"
 
 	"log/slog"
-
-	"github.com/samber/lo"
 )
 
 // IPAddressFormatter transforms an IP address into "********".
@@ -67,11 +65,12 @@ func recursivelyHidePII(key string, v slog.Value) slog.Value {
 	}
 
 	if v.Kind() == slog.KindGroup {
-		return slog.GroupValue(
-			lo.Map(v.Group(), func(item slog.Attr, _ int) slog.Attr {
-				return slog.Any(item.Key, recursivelyHidePII(item.Key, item.Value))
-			})...,
-		)
+		group := v.Group()
+		attrs := make([]slog.Attr, len(group))
+		for i, item := range group {
+			attrs[i] = slog.Any(item.Key, recursivelyHidePII(item.Key, item.Value))
+		}
+		return slog.GroupValue(attrs...)
 	}
 
 	key = strings.ToLower(key)

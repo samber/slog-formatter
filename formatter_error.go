@@ -1,9 +1,10 @@
 package slogformatter
 
 import (
+	"fmt"
 	"reflect"
-	"regexp"
 	"runtime"
+	"strings"
 
 	"log/slog"
 )
@@ -34,18 +35,20 @@ func ErrorFormatter(fieldName string) Formatter {
 	})
 }
 
-// bearer:disable go_lang_permissive_regex_validation
-var reStacktrace = regexp.MustCompile(`log/slog.*\n`)
-
 func stacktrace() string {
-	stackInfo := make([]byte, 1024*1024)
+	var pcs [32]uintptr
+	n := runtime.Callers(1, pcs[:])
+	frames := runtime.CallersFrames(pcs[:n])
 
-	if stackSize := runtime.Stack(stackInfo, false); stackSize > 0 {
-		traceLines := reStacktrace.Split(string(stackInfo[:stackSize]), -1)
-		if len(traceLines) > 0 {
-			return traceLines[len(traceLines)-1]
+	var b strings.Builder
+	for {
+		frame, more := frames.Next()
+		if !strings.Contains(frame.Function, "log/slog") {
+			fmt.Fprintf(&b, "%s\n\t%s:%d\n", frame.Function, frame.File, frame.Line)
+		}
+		if !more {
+			break
 		}
 	}
-
-	return ""
+	return b.String()
 }

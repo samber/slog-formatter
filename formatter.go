@@ -178,7 +178,7 @@ func FormatByGroup(groups []string, formatter func([]slog.Attr) slog.Value) Form
 	return func(currentGroup []string, attr slog.Attr) (slog.Value, bool) {
 		value := attr.Value
 
-		if value.Kind() != slog.KindGroup || !slices.Equal(groups, append(currentGroup, attr.Key)) {
+		if value.Kind() != slog.KindGroup || len(groups) != len(currentGroup)+1 || !slices.Equal(groups, append(currentGroup, attr.Key)) {
 			return value, false
 		}
 

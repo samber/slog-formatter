@@ -59,8 +59,12 @@ func (h *FormatterHandler) WithGroup(name string) slog.Handler {
 		return h
 	}
 
+	newGroups := make([]string, len(h.groups)+1)
+	copy(newGroups, h.groups)
+	newGroups[len(h.groups)] = name
+
 	return &FormatterHandler{
-		groups:     append(h.groups, name),
+		groups:     newGroups,
 		formatters: h.formatters,
 		handler:    h.handler.WithGroup(name),
 	}
