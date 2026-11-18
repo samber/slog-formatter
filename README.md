@@ -485,7 +485,7 @@ logger.
 //   "attrs.environment": "dev",
 //   "attrs.group1.hello": "world",
 //   "attrs.group1.group2.hello": "world",
-//   "foo": "bar"
+//   "attrs.group1.group2.foo": "bar"
 // }
 ```
 
