@@ -1,7 +1,9 @@
 package slogformatter
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"log/slog"
 	"testing"
@@ -313,4 +315,89 @@ func TestFlattenFormatterMiddleware_Enabled(t *testing.T) {
 	is.False(handler.Enabled(context.Background(), slog.LevelInfo))
 	is.True(handler.Enabled(context.Background(), slog.LevelWarn))
 	is.True(handler.Enabled(context.Background(), slog.LevelError))
+}
+
+func flattenOutput(t *testing.T, opts FlattenFormatterMiddlewareOptions, log func(logger *slog.Logger)) map[string]any {
+	t.Helper()
+
+	var buf bytes.Buffer
+	handler := opts.NewFlattenFormatterMiddlewareOptions()(slog.NewJSONHandler(&buf, nil))
+	log(slog.New(handler))
+
+	output := map[string]any{}
+	if err := json.Unmarshal(buf.Bytes(), &output); err != nil {
+		t.Fatalf("invalid JSON %q: %v", buf.String(), err)
+	}
+	delete(output, slog.TimeKey)
+	delete(output, slog.LevelKey)
+	delete(output, slog.MessageKey)
+	return output
+}
+
+func TestFlattenFormatterMiddleware_Handle_RecordGroup(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	output := flattenOutput(t, FlattenFormatterMiddlewareOptions{Separator: "_"}, func(logger *slog.Logger) {
+		logger.LogAttrs(context.Background(), slog.LevelInfo, "test",
+			slog.Group("request", slog.String("foo", "bar"), slog.Int("baz", 42)))
+	})
+	is.Equal(map[string]any{"request_foo": "bar", "request_baz": float64(42)}, output)
+}
+
+func TestFlattenFormatterMiddleware_Handle_UnderWithGroup(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	output := flattenOutput(t, FlattenFormatterMiddlewareOptions{Separator: ".", Prefix: "attrs"}, func(logger *slog.Logger) {
+		logger.
+			With("email", "samuel@acme.org").
+			WithGroup("group1").
+			With("hello", "world").
+			WithGroup("group2").
+			Error("A message", "foo", "bar", slog.Group("a", slog.Group("b", slog.String("leaf", "val"))))
+	})
+	is.Equal(map[string]any{
+		"attrs.email":                  "samuel@acme.org",
+		"attrs.group1.hello":           "world",
+		"attrs.group1.group2.foo":      "bar",
+		"attrs.group1.group2.a.b.leaf": "val",
+	}, output)
+}
+
+func TestFlattenFormatterMiddleware_WithAttrs_GroupKeys(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	group := slog.Group("request", slog.String("foo", "bar"))
+
+	output := flattenOutput(t, FlattenFormatterMiddlewareOptions{Separator: "_"}, func(logger *slog.Logger) {
+		logger.With(group).Info("test")
+	})
+	is.Equal(map[string]any{"request_foo": "bar"}, output)
+
+	output = flattenOutput(t, FlattenFormatterMiddlewareOptions{Separator: "_", Prefix: "p"}, func(logger *slog.Logger) {
+		logger.With(group).Info("test")
+	})
+	is.Equal(map[string]any{"p_request_foo": "bar"}, output)
+}
+
+func TestFlattenFormatterMiddleware_Handle_IgnorePath(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	output := flattenOutput(t, FlattenFormatterMiddlewareOptions{IgnorePath: true, Prefix: "attrs"}, func(logger *slog.Logger) {
+		logger.WithGroup("g").Info("test", slog.Group("a", slog.Group("b", slog.String("leaf", "val"))), "k", "v")
+	})
+	is.Equal(map[string]any{"leaf": "val", "k": "v"}, output)
+}
+
+func TestFlattenFormatterMiddleware_Handle_EmptyAttrs(t *testing.T) {
+	t.Parallel()
+	is := assert.New(t)
+
+	output := flattenOutput(t, FlattenFormatterMiddlewareOptions{Prefix: "attrs"}, func(logger *slog.Logger) {
+		logger.Info("test", slog.Attr{}, slog.Group("empty"), slog.Group("", slog.String("inline", "v")))
+	})
+	is.Equal(map[string]any{"attrs.inline": "v"}, output)
 }

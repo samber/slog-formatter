@@ -47,41 +47,64 @@ func (h *FlattenFormatterMiddleware) Enabled(ctx context.Context, level slog.Lev
 
 // Implements slog.Handler
 func (h *FlattenFormatterMiddleware) Handle(ctx context.Context, record slog.Record) error {
-	// newRecord := slog.NewRecord(record.Time, record.Level, record.Message, record.PC)
+	if record.NumAttrs() == 0 {
+		return h.next.Handle(ctx, record)
+	}
 
-	// record.Attrs(func(attr slog.Attr) bool {
-	// 	if !h.option.IgnorePath {
-	// 		newRecord.AddAttrs(
-	// 			PrefixAttrKeys(
-	// 				lo.Ternary(h.option.Prefix == "" || h.option.IgnorePath, "", h.option.Prefix+h.option.Separator),
-	// 				FlattenAttrsWithPrefix(h.option.Separator, h.option.Prefix, []slog.Attr{attr}),
-	// 			)...,
-	// 		)
-	// 	} else {
-	// 		newRecord.AddAttrs(FlattenAttrs([]slog.Attr{attr})...)
-	// 	}
-	// 	return true
-	// })
+	attrs := make([]slog.Attr, 0, record.NumAttrs())
+	record.Attrs(func(attr slog.Attr) bool {
+		attrs = append(attrs, attr)
+		return true
+	})
 
-	// return h.next.Handle(ctx, newRecord)
-	return h.next.Handle(ctx, record)
+	newRecord := slog.NewRecord(record.Time, record.Level, record.Message, record.PC)
+	newRecord.AddAttrs(h.flatten(attrs)...)
+
+	return h.next.Handle(ctx, newRecord)
 }
 
 // Implements slog.Handler
 func (h *FlattenFormatterMiddleware) WithAttrs(attrs []slog.Attr) slog.Handler {
-	if !h.option.IgnorePath {
-		attrs = PrefixAttrKeys(
-			lo.Ternary(h.option.Prefix == "" || h.option.IgnorePath, "", h.option.Prefix+h.option.Separator),
-			FlattenAttrsWithPrefix(h.option.Separator, h.option.Prefix, attrs),
-		)
-	} else {
-		attrs = FlattenAttrs(attrs)
-	}
-
 	return &FlattenFormatterMiddleware{
-		next:   h.next.WithAttrs(attrs),
+		next:   h.next.WithAttrs(h.flatten(attrs)),
 		option: h.option,
 	}
+}
+
+// flatten turns nested groups into flat attributes. Unless IgnorePath is set,
+// keys are joined with the separator and start with the prefix built by
+// WithGroup, so record attributes and WithAttrs attributes get the same keys.
+func (h *FlattenFormatterMiddleware) flatten(attrs []slog.Attr) []slog.Attr {
+	prefix := h.option.Prefix
+	if h.option.IgnorePath {
+		prefix = ""
+	}
+	return flattenAttrsWithPath(h.option.IgnorePath, h.option.Separator, prefix, attrs, make([]slog.Attr, 0, len(attrs)))
+}
+
+func flattenAttrsWithPath(ignorePath bool, separator string, path string, attrs []slog.Attr, output []slog.Attr) []slog.Attr {
+	for _, attr := range attrs {
+		value := attr.Value.Resolve()
+		key := attr.Key
+		if !ignorePath && path != "" && key != "" {
+			key = path + separator + key
+		} else if !ignorePath && key == "" {
+			key = path
+		}
+
+		if value.Kind() == slog.KindGroup {
+			output = flattenAttrsWithPath(ignorePath, separator, key, value.Group(), output)
+			continue
+		}
+		// Handlers ignore empty attributes; do not turn one into a prefixed key.
+		if attr.Key == "" && value.Any() == nil {
+			continue
+		}
+
+		output = append(output, slog.Attr{Key: key, Value: value})
+	}
+
+	return output
 }
 
 // Implements slog.Handler
