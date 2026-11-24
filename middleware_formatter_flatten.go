@@ -47,45 +47,37 @@ func (h *FlattenFormatterMiddleware) Enabled(ctx context.Context, level slog.Lev
 
 // Implements slog.Handler
 func (h *FlattenFormatterMiddleware) Handle(ctx context.Context, record slog.Record) error {
-	// newRecord := slog.NewRecord(record.Time, record.Level, record.Message, record.PC)
+	if record.NumAttrs() == 0 {
+		return h.next.Handle(ctx, record)
+	}
 
-	// record.Attrs(func(attr slog.Attr) bool {
-	// 	if !h.option.IgnorePath {
-	// 		newRecord.AddAttrs(
-	// 			PrefixAttrKeys(
-	// 				lo.Ternary(h.option.Prefix == "" || h.option.IgnorePath, "", h.option.Prefix+h.option.Separator),
-	// 				FlattenAttrsWithPrefix(h.option.Separator, h.option.Prefix, []slog.Attr{attr}),
-	// 			)...,
-	// 		)
-	// 	} else {
-	// 		newRecord.AddAttrs(FlattenAttrs([]slog.Attr{attr})...)
-	// 	}
-	// 	return true
-	// })
+	attrs := make([]slog.Attr, 0, record.NumAttrs())
+	record.Attrs(func(attr slog.Attr) bool {
+		attrs = append(attrs, attr)
+		return true
+	})
 
-	// return h.next.Handle(ctx, newRecord)
-	return h.next.Handle(ctx, record)
+	newRecord := slog.NewRecord(record.Time, record.Level, record.Message, record.PC)
+	newRecord.AddAttrs(h.flatten(attrs)...)
+
+	return h.next.Handle(ctx, newRecord)
 }
 
 // Implements slog.Handler
 func (h *FlattenFormatterMiddleware) WithAttrs(attrs []slog.Attr) slog.Handler {
-	if !h.option.IgnorePath {
-		attrs = PrefixAttrKeys(
-			lo.Ternary(h.option.Prefix == "" || h.option.IgnorePath, "", h.option.Prefix+h.option.Separator),
-			FlattenAttrsWithPrefix(h.option.Separator, h.option.Prefix, attrs),
-		)
-	} else {
-		attrs = FlattenAttrs(attrs)
-	}
-
 	return &FlattenFormatterMiddleware{
-		next:   h.next.WithAttrs(attrs),
+		next:   h.next.WithAttrs(h.flatten(attrs)),
 		option: h.option,
 	}
 }
 
 // Implements slog.Handler
 func (h *FlattenFormatterMiddleware) WithGroup(name string) slog.Handler {
+	// https://cs.opensource.google/go/x/exp/+/46b07846:slog/handler.go;l=247
+	if name == "" {
+		return h
+	}
+
 	prefix := h.option.Prefix + h.option.Separator
 	if h.option.IgnorePath || h.option.Prefix == "" {
 		prefix = ""
@@ -99,6 +91,20 @@ func (h *FlattenFormatterMiddleware) WithGroup(name string) slog.Handler {
 			Prefix:     prefix + name,
 		},
 	}
+}
+
+// flatten flattens attrs and prefixes their keys with the current group path.
+func (h *FlattenFormatterMiddleware) flatten(attrs []slog.Attr) []slog.Attr {
+	if h.option.IgnorePath {
+		return FlattenAttrs(attrs)
+	}
+
+	prefix := ""
+	if h.option.Prefix != "" {
+		prefix = h.option.Prefix + h.option.Separator
+	}
+
+	return PrefixAttrKeys(prefix, FlattenAttrsWithPrefix(h.option.Separator, "", attrs))
 }
 
 // PrefixAttrKeys prefix attribute keys.
@@ -118,13 +124,12 @@ func FlattenAttrs(attrs []slog.Attr) []slog.Attr {
 	output := make([]slog.Attr, 0, len(attrs))
 
 	for _, attr := range attrs {
-		switch attr.Value.Kind() {
-		case slog.KindAny, slog.KindBool, slog.KindDuration, slog.KindFloat64, slog.KindInt64, slog.KindUint64, slog.KindString, slog.KindTime:
+		attr.Value = attr.Value.Resolve()
+
+		if attr.Value.Kind() == slog.KindGroup {
+			output = append(output, FlattenAttrs(attr.Value.Group())...)
+		} else {
 			output = append(output, attr)
-		case slog.KindGroup:
-			output = append(output, attr.Value.Group()...)
-		case slog.KindLogValuer:
-			output = append(output, slog.Any(attr.Key, attr.Value.Resolve().Any()))
 		}
 	}
 
@@ -132,20 +137,49 @@ func FlattenAttrs(attrs []slog.Attr) []slog.Attr {
 }
 
 // FlattenAttrsWithPrefix flatten attributes recursively, with prefix.
+// The prefix and the separator are only added to the keys of attributes
+// that were nested in a group. Top level attributes keep their key.
 func FlattenAttrsWithPrefix(separator string, prefix string, attrs []slog.Attr) []slog.Attr {
 	output := make([]slog.Attr, 0, len(attrs))
 
 	for _, attr := range attrs {
-		switch attr.Value.Kind() {
-		case slog.KindAny, slog.KindBool, slog.KindDuration, slog.KindFloat64, slog.KindInt64, slog.KindUint64, slog.KindString, slog.KindTime:
+		attr.Value = attr.Value.Resolve()
+
+		if attr.Value.Kind() == slog.KindGroup {
+			output = append(output, flattenGroup(separator, joinKeys(separator, prefix, attr.Key), attr.Value.Group())...)
+		} else {
 			output = append(output, attr)
-		case slog.KindGroup:
-			output = append(output, PrefixAttrKeys(prefix+separator+attr.Key+separator, FlattenAttrsWithPrefix(separator, "", attr.Value.Group()))...)
-		case slog.KindLogValuer:
-			attr := slog.Any(attr.Key, attr.Value.Resolve().Any())
-			output = append(output, FlattenAttrsWithPrefix(separator, prefix, []slog.Attr{attr})...)
 		}
 	}
 
 	return output
+}
+
+// flattenGroup flattens the members of a group and prefixes every key with the group path.
+func flattenGroup(separator string, path string, attrs []slog.Attr) []slog.Attr {
+	output := make([]slog.Attr, 0, len(attrs))
+
+	for _, attr := range attrs {
+		attr.Value = attr.Value.Resolve()
+
+		if attr.Value.Kind() == slog.KindGroup {
+			output = append(output, flattenGroup(separator, joinKeys(separator, path, attr.Key), attr.Value.Group())...)
+		} else {
+			attr.Key = joinKeys(separator, path, attr.Key)
+			output = append(output, attr)
+		}
+	}
+
+	return output
+}
+
+// joinKeys joins two key parts, ignoring the empty ones.
+func joinKeys(separator string, left string, right string) string {
+	if left == "" {
+		return right
+	}
+	if right == "" {
+		return left
+	}
+	return left + separator + right
 }
